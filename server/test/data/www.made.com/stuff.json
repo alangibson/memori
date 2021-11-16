@@ -1,0 +1,72 @@
+{
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "Ilaria Extra Large Cluster Pendant,  Multicolour & Brass",
+    "brand": "MADE.COM",
+    "sku": "CLPILA017MUL-UK",
+    "description": "Ilaria Extra Large Cluster Pendant,  Multicolour & Brass",
+    "itemCondition": "new",
+    "image": "https://img.made.com/image/upload/c_pad,d_madeplusgrey.svg,f_auto,w_1200,dpr_1.0,q_auto:good,b_rgb:f5f6f4/v4/catalog/product/asset/3/4/c/0/34c057c8839d5f88f350cc41bf6ef1104b0f7261_CLPILA017MUL_UK_Ilaria_Extra_Large_Cluster_Pendant_Multicolour_Brass_ar3_2_PL_PS.png",
+    "category": "Lighting",
+    "color": "Multi",
+    "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "price": "329.00",
+        "priceCurrency": "GBP"
+    },
+    "isRelatedTo": [
+        {
+            "@type": "Product",
+            "url": "https://www.made.com/ilaria-extra-large-cluster-pendant-multicolour-brass",
+            "name": "Ilaria Extra Large Cluster Pendant,  Multicolour & Brass",
+            "brand": "MADE.COM",
+            "sku": "CLPILA017MUL-UK",
+            "image": "https://img.made.com/image/upload/c_pad,d_madeplusgrey.svg,f_auto,w_1200,dpr_1.0,q_auto:good,b_rgb:f5f6f4/v4/catalog/product/asset/3/4/c/0/34c057c8839d5f88f350cc41bf6ef1104b0f7261_CLPILA017MUL_UK_Ilaria_Extra_Large_Cluster_Pendant_Multicolour_Brass_ar3_2_PL_PS.png",
+            "description": "Ilaria Extra Large Cluster Pendant,  Multicolour & Brass",
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": 4.75323,
+                "reviewCount": 1005
+            }
+        },
+        {
+            "@type": "Product",
+            "url": "https://www.made.com/ilaria-extra-large-cluster-pendant-multicoloured-glass-brass",
+            "name": "Ilaria Extra Large Cluster Pendant, Multicoloured Glass & Brass",
+            "brand": "MADE.COM",
+            "sku": "CLPILA023MUL-UK",
+            "image": "https://img.made.com/image/upload/c_pad,d_madeplusgrey.svg,f_auto,w_1200,dpr_1.0,q_auto:good,b_rgb:f5f6f4/v4/catalog/product/asset/e/c/8/2/ec82a906bd97eae48f14ca1c819a57a7c046f86a_CLPILA023MUL_UK_Ilaria_Extra_Large_Cluster_Pendant_Multicolour_Pink_Brass_ar3_2_PL_PS.png",
+            "description": "Ilaria Extra Large Cluster Pendant, Multicoloured Glass & Brass",
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": 4.75323,
+                "reviewCount": 1005
+            }
+        }
+    ],
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": 4.75323,
+        "reviewCount": 1005
+    }
+}
+
+{
+    "@context": "http://schema.org/",
+    "@type": "3DModel",
+    "image": "https://img.made.com/image/upload/c_pad,d_madeplusgrey.svg,f_auto,w_1000,dpr_1,q_auto:good,b_rgb:FFFFFF/v4/catalog/product/asset/4/c/3/2/4c3225ba13177858074fa7bc41624115fec239c0_CLPILA017MUL_UK_Ilaria_Extra_Large_Cluster_Pendant_Multicolour_Brass_ar1_1_PL_PS.png",
+    "name": "Ilaria Extra Large Cluster Pendant,  Multicolour & Brass",
+    "encoding": [
+        {
+            "@type": "MediaObject",
+            "contentUrl": "https://media.made.com/3dmodels/CLPILA017MUL-UK/source/CLPILA017MUL-UK-MDL-M-GLTF/product.gltf",
+            "encodingFormat": "model/gltf+json"
+        },
+        {
+            "@type": "MediaObject",
+            "contentUrl": "https://media.made.com/3dmodels/CLPILA017MUL-UK/source/CLPILA017MUL-UK-MDL-CM-USDZ.usdz",
+            "encodingFormat": "model/vnd.usdz+zip"
+        }
+    ]
+}

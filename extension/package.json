@@ -1,0 +1,12 @@
+{
+  "name": "memori-browser-extension",
+  "version": "0.0.1",
+  "description": "Memori Browser Extension",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "rm -fr ./dist && mkdir ./dist && zip -r ./dist/memori-browser-extension-latest.zip *"
+  },
+  "author": "",
+  "license": "ISC"
+}

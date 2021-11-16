@@ -1,0 +1,22 @@
+div.result {
+    border: 1px solid grey;
+    padding: 1em;
+    margin: 1em;
+}
+
+div.result div {
+    margin-bottom: 0.5em;
+}
+
+div.subschemas {
+    display: flex;
+    overflow-x: auto;
+}
+
+div.subschemas div.subschema {
+    padding: 1em;
+    border: 1px solid black;
+    /* width: fit-content;*/
+    /* width: 10em; */
+    min-width: 10em;
+}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Memori : Your External Memory</title>
+    <meta name="description" content="Your external memory">
+    <meta name="theme-color" content="#B12A34">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="index.css">
+    <link rel="manifest" href="memori.webmanifest">
+    <script src="index.js" defer></script>
+</head>
+
+<body>
+
+    <ul>
+        <li>
+            Search <input name="q" />
+            <select name="sort">
+                <option>Relevance</option>
+                <option>created:desc</option>
+            </select>
+            <button onclick="find(document.querySelector(`input[name='q']`).value, 
+                                  document.querySelector(`select[name='sort']`).value)">
+                Recall
+            </button>
+        </li>
+        <li>
+            <button onclick="find('', document.querySelector(`select[name='sort']`).value)">
+                List All
+            </button>
+        </li>
+        <li>
+            <form method="get" action="/login">
+                <label for="token">Log in with token</label>
+                <input id="token" name="token" />
+                <button>Log in</button>
+            </form>
+        </li>
+        <li>
+            <form method="get" action="/logout">
+                <label for="token">Log out</label>
+                <button>Log out</button>
+            </form>
+
+        </li>
+        <li>
+            <form method="post" action="/remember" enctype="multipart/form-data">
+                <label for="files">File</label>
+                <input id="files" name="file" type="file" multiple="true" />
+                <br />
+                <button>Remember</button>
+            </form>
+        </li>
+        <li>
+            <form method="post" action="/remember" enctype="multipart/form-data">
+                Photo:
+                <input name="image" type="file" accept="image/*" capture>
+                <br />
+                <button>Remember</button>
+            </form>
+        </li>
+        <li>
+            <form method="POST" action="/remember" enctype="multipart/form-data">
+                Video: <input name="video" type="file" accept="video/*" capture>
+                <br/>
+                <button>Remember</button>
+            </form>
+        </li>
+        <li>
+            <form method="POST" action="/remember" enctype="multipart/form-data">
+                Audio: <input name="audio" type="file" accept="audio/*" capture>
+                <br/>
+                <button>Remember</button>
+            </form>
+        </li>
+        <li>
+            <form method="post" action="/remember" enctype="multipart/form-data" >
+                URL:
+                <input name="uri-list" />
+                <br />
+                <button>Remember</button>
+            </form>
+        </li>
+        <li>
+            <form method="post" action="/remember" enctype="multipart/form-data" >
+                Notes
+                <br />
+                <input name="name" />
+                <br />
+                <select name="mimetype">
+                    <option value="text/plain">Plain Text</option>
+                    <option value="text/markdown">Markdown</option>
+                </select>
+                <br />
+                <textarea name="text"></textarea>
+                <br />
+                <button>Remember</button>
+            </form>
+        </li>
+        <li>
+            Audio
+            <button id="recordAudio" onclick="recordAudio()">Record</button>
+            <button id="pauseAudio">Pause</button>
+            <button id="rememberAudio">Remember</button>
+        </li>
+    </ul>
+
+    <div id="results">
+    </div>
+
+</body>
+
+</html>
