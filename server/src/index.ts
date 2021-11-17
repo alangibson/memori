@@ -1,3 +1,4 @@
+import { promises as fs } from "fs";
 import { URL } from 'url';
 import { SearchResult } from 'minisearch';
 import crypto from 'crypto';
@@ -35,6 +36,9 @@ export async function contentHashUrl(b : Buffer) : Promise<URL> {
     return new URL('cid:' + cid.toV1().toString(base32.encoder));
 }
 
+export async function mkdir(path: string) {
+    await fs.mkdir(path, { recursive: true });
+}
 
 export interface IRecalledMemory {
     thing: IMemory;
@@ -49,6 +53,13 @@ export class Mind implements IPersistable {
     constructor(path: string) {
         this.commands = new Commands(`${path}/commands`);
         this.index = new Index(`${path}/index`);
+    }
+
+    static async create(storageRoot: string, spaceName: string, mindName: string): Promise<Mind> {
+        const path: string = `${storageRoot}/${spaceName}/${mindName}`;
+        const configPath: string = `${path}/config`;
+        await mkdir(configPath);
+        return new Mind(mindName);
     }
 
     public async fetch(uri: URL): Promise<ICommittable> {

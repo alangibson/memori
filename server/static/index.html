@@ -33,6 +33,12 @@
             </button>
         </li>
         <li>
+            Create new Mind
+            <label for="mindName">Name</label>
+            <input name="mindName" />
+            <button onclick="createMind(document.querySelector(`input[name='mindName']`).value)">Create</button>
+        </li>
+        <li>
             <form method="get" action="/login">
                 <label for="token">Log in with token</label>
                 <input id="token" name="token" />

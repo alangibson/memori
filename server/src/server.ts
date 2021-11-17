@@ -1,4 +1,7 @@
-import fs from 'fs';
+import crypto from 'crypto';
+import { promises as fs } from 'fs';
+import { v4 as uuid } from 'uuid';
+import ngrok from 'ngrok';
 import { URL } from 'url';
 import express from 'express';
 import multer, { Multer } from 'multer';
@@ -19,24 +22,69 @@ interface IAuthorization extends Express.User {
     scope: AuthorizationScopes;
 }
 
+interface ISecurity {
 
-function getAuthorizationByToken(token: string) {
-    // Read in security file
-    const security = JSON.parse(fs.readFileSync(argv.security, { encoding: 'utf8' }));
-    // Load up owner key, mind name and scope based on token
-    const access = security.tokens[token];
-    if (!access) {
-        return null;
-    } else {
-        const authorization: IAuthorization = {
-            orgName: access[0],
-            mindName: access[1],
-            scope: access[2]
-        };
-        return authorization;
+    tokens: {
+        [key: string]: { // token
+            space: string,
+            name: string,
+            role: AuthorizationScopes;
+        }   
     }
 
 }
+
+class Security {
+
+    security: ISecurity;
+
+    private constructor(security: ISecurity) {
+        this.security = security;
+    }
+
+    static async load(): Promise<Security> {
+        return new Security(
+            JSON.parse(await fs.readFile(`${process.cwd()}/etc/security.json`, { encoding: 'utf8' }))
+        );
+    }
+
+    async save() {
+        await fs.writeFile(`${process.cwd()}/etc/security.json`, JSON.stringify(this.security), { encoding: 'utf8' });
+    }
+
+    add(space: string, name: string, scope: AuthorizationScopes) {
+        const token: string = crypto.randomBytes(64).toString('base64url');
+        // Should be impossible, but if token exists, fatal error
+        if (token in this.security.tokens)
+            throw new Error('Generated a token that already exists. This should be impossible.');
+        this.security.tokens[token] = {
+            space: space,
+            name: name,
+            role: scope
+        };
+        return token;
+    }
+
+    async getAuthorizationByToken(token: string) {
+        // Read in security file
+        // const security = JSON.parse(await fs.readFile(argv.security, { encoding: 'utf8' }));
+        // Load up owner key, mind name and scope based on token
+        const access = this.security.tokens[token];
+        if (!access) {
+            return null;
+        } else {
+            const authorization: IAuthorization = {
+                orgName: access.space,
+                mindName: access.name,
+                scope: access.role
+            };
+            return authorization;
+        }
+    
+    }
+
+}
+
 
 
 // Parse command line args
@@ -63,16 +111,16 @@ app.use(express.static('static'));
 // Support Authorization header
 app.use(passport.initialize());
 // http://www.passportjs.org/packages/passport-http-bearer/
-passport.use(new BearerStrategy((token, done) => {
-    const authorization = getAuthorizationByToken(token);
+passport.use(new BearerStrategy(async (token, done) => {
+    const authorization = await (await Security.load()).getAuthorizationByToken(token)
     if (!authorization)
         return done(null, null);
     else
         done(null, authorization, { scope: authorization.scope });
 }));
 passport.use(new CookieStrategy({ cookieName: 'Authorization' },
-    (token: string, done: any) => {
-        const authorization = getAuthorizationByToken(token);
+    async (token: string, done: any) => {
+        const authorization = await (await Security.load()).getAuthorizationByToken(token)
         if (!authorization)
             return done(null, null);
         else
@@ -142,7 +190,7 @@ app.post('/remember/share',
             return res.status(303)
                 .setHeader('Location',
                     // @ts-ignore
-                    `https://ef77-91-113-85-122.ngrok.io/recall?@id=${thing['@id']}`)
+                    `/recall?@id=${thing['@id']}`)
                 .end();
         } else {
             return res.status(400)
@@ -174,7 +222,7 @@ app.post("/remember",
                 encodingFormat: 'text/uri-list',
                 blob: Buffer.from(req.body['uri-list'])
             });
-        
+
         // Remember user notes
         if (req.body.name && req.body.mimetype && req.body.text)
             await mind.remember({
@@ -187,7 +235,7 @@ app.post("/remember",
         console.debug(`POST /remember : Trying to remember ${req.files?.length} files`)
         const remembered: IMemory[] = await Promise.all(
             (<any[]>req.files)?.map(async (file: any): Promise<IMemory> => {
-                
+
                 console.debug(`POST /remember : Field name=${file.fieldname}, original name=${file.originalname}, mime type=${file.mimetype},encoding=${file.encoding}, size=${file.size}`);
 
                 return mind.remember({
@@ -276,7 +324,7 @@ app.get('/recall',
                     .end();
 
         } else {
-            
+
             const memory = new Mind(authorization.mindName);
             await memory.load();
 
@@ -360,6 +408,30 @@ app.delete('/recall',
         }
     });
 
+app.post("/mind", async (req, res) => {
+
+    const storageRoot: string = 'store';
+    const spaceName: string = uuid();
+    const mindName: string|undefined = req.body.mindName?.toString();
+    
+    if (!mindName)
+        return res.status(400)
+            .send('No mind name provided')
+            .end();
+
+    const security: Security = await Security.load();
+    const token: string = security.add(spaceName, mindName, 'all');
+    await security.save();
+    
+    const mind: Mind = await Mind.create(storageRoot, spaceName, mindName);
+    
+    // Log user in and redirect back to home page
+    res.status(200)
+        .setHeader('Set-Cookie', `Authorization=${token}; Max-Age>=0; path=/; HttpOnly; SameSite=Lax`)
+        .json({ token: token })
+        .end();
+
+});
 
 // https://owasp.org/www-community/HttpOnly
 app.get('/login',
@@ -381,17 +453,31 @@ app.get('/logout',
     }
 );
 
-if (process.env.NODE_ENV == 'development')
+if (process.env.NODE_ENV == 'development') {
+
+    // Run a local https server
     https.createServer({
-        key: fs.readFileSync(`${process.cwd()}/dev.key`),
-        cert: fs.readFileSync(`${process.cwd()}/dev.cert`)
+        key: await fs.readFile(`${process.cwd()}/dev.key`),
+        cert: await fs.readFile(`${process.cwd()}/dev.cert`)
     }, app)
         .listen(argv.port, argv.bind, () => {
             console.info(`Server started with TLS at https://${argv.bind}:${argv.port}`);
         });
-else
+
+} else if (process.env.NODE_ENV == 'test') {
+
+    // Open ngrok tunnel
+    const ngrokUrl = await ngrok.connect(argv.port);
+
+    // Start the express server
+    app.listen(argv.port, argv.bind, () => {
+        console.info(`Server started at http://${argv.bind}:${argv.port}`);
+        console.info(`Connect via secure tunnel at ${ngrokUrl}`);
+    });
+
+} else {
     // Start the express server
     app.listen(argv.port, argv.bind, () => {
         console.info(`Server started at http://${argv.bind}:${argv.port}`);
     });
-
+}

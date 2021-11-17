@@ -1,7 +1,9 @@
 
 # Memori : Never Forget
 
-## Prerequisites
+
+
+## Installation
 
 ```
 # Install Vosk
@@ -11,6 +13,16 @@ unzip vosk-model-en-us-0.22.zip
 
 # Install ffmpeg
 sudo apt install ffmpeg
+
+# Clone Memori application
+git clone https://github.com/alangibson/memori.git
+
+# Run the server
+cd memori/server
+npm install -D
+npm run start:test
+# Open 'Connect via secure tunnel' from output in the browser
+
 ```
 
 ## Usage

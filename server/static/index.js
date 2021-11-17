@@ -31,6 +31,38 @@ function clearResults() {
     document.getElementById('results').innerHTML = '';
 }
 
+// Start up the application
+function start() {
+    console.info('Starting Memori application');
+
+    // See if we are authenticated
+    fetch(`/recall?q=`, { credentials: "include" })
+        .then((response) => {
+            if (response.status >= 400) {
+                appendHtmlToResults(`
+                    <p>
+                    We got a bad response from the server. 
+                    Are you sure you are logged in?
+                    </p>
+
+                    <p>
+                    If you haven't created a Mind yet, you can do it here
+                    <form method="POST">
+                        <label for="mindName">Name</label>
+                        <input name="mindName" />
+                        <button>Create</button>
+                    </form>
+                    </p>
+                `);
+                return;
+            }
+        })
+        .catch((err) => appendHtmlToResults(`
+            lame
+        `));
+    ;
+}
+
 function find(q, sort) {
 
     // Find and save Authorization token
@@ -153,12 +185,12 @@ function recordAudio() {
             console.log(`Storing data of size ${e.data.size}`);
             if (e.data.size > 0)
                 recordedChunks.push(e.data);
-        }); 
+        });
 
         mediaRecorder.addEventListener('stop', function () {
-            
+
             // TODO reset icons
-            
+
             // Turn audio data into a blob
             const blob = new Blob(recordedChunks, { type: 'audio/webm' });
 
@@ -194,3 +226,26 @@ function recordAudio() {
         .then(handleSuccess);
 
 }
+
+function createMind(mindName) {
+    const formData = new FormData();
+    formData.append('mindName', mindName);
+    fetch('/mind', {
+        method: 'POST',
+        body: formData
+    })
+        .then((response) => {
+            response.json()
+                .then((json) => {
+                    console.log('json', json);
+                    clearResults();
+                    appendHtmlToResults(`
+                        <p>Your login token is <b>${json.token}</b></p>
+                        <p>Save this to your password safe or store it offline. 
+                        We will only display it this one time.</p>
+                    `);        
+                })
+        });
+}
+
+window.onload = start;
