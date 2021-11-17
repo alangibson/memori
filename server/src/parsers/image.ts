@@ -1,3 +1,6 @@
+import { Tensor3D, Tensor4D } from '@tensorflow/tfjs';
+import tfModel, { DetectedObject } from '@tensorflow-models/coco-ssd';
+import tfNode from '@tensorflow/tfjs-node';
 import Tesseract, { RecognizeResult } from 'tesseract.js';
 import { ICommittable, IMemory } from "../models";
 import { IParser, abstractFromString } from './index';
@@ -24,10 +27,18 @@ export class ImageParser implements IParser {
                 errorHandler: (error) => console.error(`ImageParser.parse() : Tesseract.recognize() error ${error}`)
             }
         );
-        
-        // console.warn(`ImageParser.parse() : Tesseract is disabled!`);
-        // // @ts-ignore
-        // const result: RecognizeResult = { data: { text: '' } };
+
+        // Perform image recognition
+        const image: Tensor3D|Tensor4D = tfNode.node.decodeImage(response.blob);
+        const model = await tfModel.load();
+        // @ts-ignore because we will never have a Tensor4D image
+        const detections: DetectedObject[] = await model.detect(image);
+        const keywords: string = detections
+            .map((detection) => detection.class)
+            .reduce((prev: string, curr: string) => prev + ' ' + curr, '');
+
+        // Final text to index
+        const text = result.data.text + ' ' + keywords;
 
         return [
             {
@@ -35,10 +46,10 @@ export class ImageParser implements IParser {
                 "@type": "ImageObject",
                 "@id": response.url.toString(),
                 url: response.url,
-                text: result.data.text,
-                abstract: abstractFromString(result.data.text),
-                name: response.name || result.data.text.slice(0, 50),
-                description: abstractFromString(result.data.text),
+                text: text,
+                abstract: abstractFromString(text),
+                name: response.name || text.slice(0, 50),
+                description: abstractFromString(text),
                 encodingFormat: response.encodingFormat,
                 // TODO get these somehow
                 dateCreated: new Date().toISOString(),
