@@ -52,7 +52,11 @@ class FlexsearchSearch implements ISearchIndex, IPersistable {
     }
 
     async remove(id: URL) {
-        await this.index.removeAsync(id.toString());
+        try {
+            await this.index.removeAsync(id.toString());
+        } catch (e) {
+            console.warn(`FlexsearchSearch.remove() : Failed to remove @id ${id} because ${e}`);
+        }
     }
 
     async save() {

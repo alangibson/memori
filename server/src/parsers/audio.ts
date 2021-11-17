@@ -1,7 +1,7 @@
 import { Writable, Readable } from 'stream';
 import { cidUrl } from "..";
 import { IRememberable, IMemory } from "../models";
-import { abstractFromString, IParser } from "./index";
+import { abstractFromString, IParser, nameFromString } from "./index";
 import { Converter } from "ffmpeg-stream";
 // @ts-ignore
 import vosk from 'vosk';
@@ -72,7 +72,7 @@ export class AudioParser implements IParser {
                 "@context": 'https://schema.org',
                 "@type": 'AudioObject',
                 "@id": response.url?.toString() || cidUrl(response.blob).toString(),
-                name: response.name || voskStream.text.slice(0, 50),
+                name: response.name || nameFromString(voskStream.text),
                 url: response.url || cidUrl(response.blob),
                 text: voskStream.text,
                 "m:created": new Date().toISOString(),

@@ -1,14 +1,15 @@
 
 ## Prerequisites
 
-### Install Vosk
-
 ```
+# Install Vosk
 pip3 install vosk
 curl -L -O http://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip
 unzip vosk-model-en-us-0.22.zip
-```
 
+# Install ffmpeg
+sudo apt install ffmpeg
+```
 
 ## Usage
 

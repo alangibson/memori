@@ -59,7 +59,7 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
         const response: YtResponse = await youtubedl(media.url.toString(), {
             dumpSingleJson: true,
             noWarnings: true,
-            noCallHome: true,
+            callHome: false,
             noCheckCertificate: true,
             youtubeSkipDashManifest: true,
             format: format
