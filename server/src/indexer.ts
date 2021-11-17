@@ -101,20 +101,12 @@ class FlexsearchSearch implements ISearchIndex, IPersistable {
 
 export class Index implements IPersistable {
 
-    // private fulltextIndex: MiniSearch;
     private path: string;
-    private options: Options;
     private db: PouchDB.Database;
     private idx: FlexsearchSearch;
 
     constructor(path: string) {
         this.path = path;
-        this.options = {
-            // fields to index for full-text search
-            fields: ['text'],
-            // fields to return with search results
-            storeFields: ['@id', '@type']
-        };
         // Start with an in-memory PouchDB
         this.db = new PouchDB.default(`${this.path}/db`, {adapter: 'memory'});
         this.idx = new FlexsearchSearch(this.db);

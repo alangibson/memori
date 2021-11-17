@@ -11,6 +11,7 @@ import { Index } from "./indexer";
 import { Commands } from "./commands";
 import { FileFetcher, HttpFetcher } from "./fetcher";
 import { Parser } from './parsers';
+import { Config } from "./configuration";
 
 export interface IPersistable {
     save(): void;
@@ -47,19 +48,24 @@ export interface IRecalledMemory {
 
 export class Mind implements IPersistable {
 
+    private path: string;
     private commands: Commands;
     private index: Index;
+    private config: Config;
 
-    constructor(path: string) {
-        this.commands = new Commands(`${path}/commands`);
-        this.index = new Index(`${path}/index`);
+    constructor(jailPath: string, space: string, name: string) {
+        this.path = `${jailPath}/${space}/${name}`;
+        this.commands = new Commands(`${this.path}/commands`);
+        this.index = new Index(`${this.path}/index`);
+        this.config = Config.getInstance();
     }
 
-    static async create(storageRoot: string, spaceName: string, mindName: string): Promise<Mind> {
-        const path: string = `${storageRoot}/${spaceName}/${mindName}`;
-        const configPath: string = `${path}/config`;
-        await mkdir(configPath);
-        return new Mind(mindName);
+    static async create(jailPath: string, space: string, name: string): Promise<Mind> {
+        // TODO remove this duplicate path building
+        // const path: string = `${jailPath}/${space}/${name}`;
+        // const configPath: string = `${path}/config`;
+        // await mkdir(configPath);
+        return new Mind(jailPath, space, name);
     }
 
     public async fetch(uri: URL): Promise<ICommittable> {
@@ -76,7 +82,8 @@ export class Mind implements IPersistable {
     }
 
     public async parse(response: ICommittable): Promise<IMemory[]> {
-        return await new Parser().parse(response);
+        return await new Parser(await this.config.settings())
+            .parse(response);
     }
 
     // Commit something to Memory

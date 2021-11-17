@@ -8,3 +8,5 @@ ngrok
 dist/
 vosk*
 dump
+server/store
+

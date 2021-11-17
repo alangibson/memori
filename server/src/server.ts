@@ -1,90 +1,18 @@
-import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import { v4 as uuid } from 'uuid';
 import ngrok from 'ngrok';
 import { URL } from 'url';
 import express from 'express';
-import multer, { Multer } from 'multer';
-import { IRecalledMemory, Mind } from './index.js';
+import multer from 'multer';
+import { IRecalledMemory, Mind } from './index';
 import passport from 'passport';
-import { Strategy as BearerStrategy, VerifyFunction } from 'passport-http-bearer';
+import { Strategy as BearerStrategy } from 'passport-http-bearer';
 import CookieStrategy from 'passport-cookie';
 import { Command, Option } from 'commander';
 import cookieParser from 'cookie-parser';
 import https from 'https';
-import { IMemory, IRememberable } from './models.js'
-
-type AuthorizationScopes = 'all';
-
-interface IAuthorization extends Express.User {
-    orgName: string;
-    mindName: string;
-    scope: AuthorizationScopes;
-}
-
-interface ISecurity {
-
-    tokens: {
-        [key: string]: { // token
-            space: string,
-            name: string,
-            role: AuthorizationScopes;
-        }   
-    }
-
-}
-
-class Security {
-
-    security: ISecurity;
-
-    private constructor(security: ISecurity) {
-        this.security = security;
-    }
-
-    static async load(): Promise<Security> {
-        return new Security(
-            JSON.parse(await fs.readFile(`${process.cwd()}/etc/security.json`, { encoding: 'utf8' }))
-        );
-    }
-
-    async save() {
-        await fs.writeFile(`${process.cwd()}/etc/security.json`, JSON.stringify(this.security), { encoding: 'utf8' });
-    }
-
-    add(space: string, name: string, scope: AuthorizationScopes) {
-        const token: string = crypto.randomBytes(64).toString('base64url');
-        // Should be impossible, but if token exists, fatal error
-        if (token in this.security.tokens)
-            throw new Error('Generated a token that already exists. This should be impossible.');
-        this.security.tokens[token] = {
-            space: space,
-            name: name,
-            role: scope
-        };
-        return token;
-    }
-
-    async getAuthorizationByToken(token: string) {
-        // Read in security file
-        // const security = JSON.parse(await fs.readFile(argv.security, { encoding: 'utf8' }));
-        // Load up owner key, mind name and scope based on token
-        const access = this.security.tokens[token];
-        if (!access) {
-            return null;
-        } else {
-            const authorization: IAuthorization = {
-                orgName: access.space,
-                mindName: access.name,
-                scope: access.role
-            };
-            return authorization;
-        }
-    
-    }
-
-}
-
+import { IMemory, IRememberable } from './models'
+import { AccessRule, Config } from './configuration';
 
 
 // Parse command line args
@@ -112,7 +40,7 @@ app.use(express.static('static'));
 app.use(passport.initialize());
 // http://www.passportjs.org/packages/passport-http-bearer/
 passport.use(new BearerStrategy(async (token, done) => {
-    const authorization = await (await Security.load()).getAuthorizationByToken(token)
+    const authorization = await Config.getInstance().getAuthorizationByToken(token)
     if (!authorization)
         return done(null, null);
     else
@@ -120,7 +48,7 @@ passport.use(new BearerStrategy(async (token, done) => {
 }));
 passport.use(new CookieStrategy({ cookieName: 'Authorization' },
     async (token: string, done: any) => {
-        const authorization = await (await Security.load()).getAuthorizationByToken(token)
+        const authorization = await Config.getInstance().getAuthorizationByToken(token)
         if (!authorization)
             return done(null, null);
         else
@@ -167,12 +95,11 @@ app.post('/remember/share',
         console.log('/remember/share', req);
 
         // Get org and mind via tokens structure
-        // Casting to IAuthorization because we should return Unauthorized if no access
-        const authorization: IAuthorization = <IAuthorization>req.user;
+        // Casting to AccessRule because we should return Unauthorized if no access
+        const authorization: AccessRule = <AccessRule>req.user;
 
-        console.log('authorization', authorization);
-
-        const mind = new Mind(authorization.mindName);
+        const config = await Config.getInstance();
+        const mind: Mind = await config.newMind(authorization);
         await mind.load();
 
         // PWA as Web Share Target can receieve basically anything in text field
@@ -208,12 +135,12 @@ app.post("/remember",
         console.debug(`POST /remember : called`);
 
         // Get org and mind via tokens structure
-        // Casting to IAuthorization because we should return Unauthorized if no access
-        const authorization: IAuthorization = <IAuthorization>req.user;
+        // Casting to AccessRule because we should return Unauthorized if no access
+        const authorization: AccessRule = <AccessRule>req.user;
 
         // Load up Mind
-        console.log(`POST /remember : Memory is ${authorization.mindName}`);
-        const mind = new Mind(authorization.mindName);
+        console.log(`POST /remember : Memory is ${authorization.name}`);
+        const mind = await Config.getInstance().newMind(authorization);
         await mind.load();
 
         // Remember uri lists
@@ -272,12 +199,12 @@ app.get('/recall',
         }
 
         // Get org and mind via tokens structure
-        // Casting to IAuthorization because we should return Unauthorized if no access
-        const authorization: IAuthorization = <IAuthorization>req.user;
+        // Casting to AccessRule because we should return Unauthorized if no access
+        const authorization: AccessRule = <AccessRule>req.user;
 
         if (req.query['@id']) {
 
-            const memory = new Mind(authorization.mindName);
+            const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
 
             const atId: URL = new URL(req.query['@id'].toString());
@@ -293,7 +220,7 @@ app.get('/recall',
 
         } else if (req.query.q) {
 
-            const memory = new Mind(authorization.mindName);
+            const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
 
             // Free text search
@@ -325,7 +252,7 @@ app.get('/recall',
 
         } else {
 
-            const memory = new Mind(authorization.mindName);
+            const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
 
             const found: IRecalledMemory[] = await memory.all();
@@ -342,8 +269,9 @@ app.get('/recall/blob',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
-        const authorization: IAuthorization = <IAuthorization>req.user;
-        const mind = new Mind(authorization.mindName);
+        const authorization: AccessRule = <AccessRule>req.user;
+
+        const mind = await Config.getInstance().newMind(authorization);
         await mind.load();
 
         if (req.query['@id']) {
@@ -389,8 +317,8 @@ app.delete('/recall',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
-        const authorization: IAuthorization = <IAuthorization>req.user;
-        const mind = new Mind(authorization.mindName);
+        const authorization: AccessRule = <AccessRule>req.user;
+        const mind = await Config.getInstance().newMind(authorization);
         await mind.load();
 
         if (req.query['@id']) {
@@ -419,11 +347,11 @@ app.post("/mind", async (req, res) => {
             .send('No mind name provided')
             .end();
 
-    const security: Security = await Security.load();
-    const token: string = security.add(spaceName, mindName, 'all');
-    await security.save();
+    const config: Config = Config.getInstance();
+    const token: string = await config.allow(spaceName, mindName, 'all');
+    await config.save();
     
-    const mind: Mind = await Mind.create(storageRoot, spaceName, mindName);
+    await Mind.create(storageRoot, spaceName, mindName);
     
     // Log user in and redirect back to home page
     res.status(200)

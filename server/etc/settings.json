@@ -1,0 +1,5 @@
+{
+    "ocrLanguage": "eng",
+    "voskModel": "vosk-model-en-us-0.22",
+    "defaultMindName": "main"
+}

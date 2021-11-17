@@ -48,7 +48,7 @@ export class DocumentParser implements IParser {
             name: nameFromString(allText),
             text: allText,
             url: response.url,
-            "m:created": new Date().toUTCString()
+            'm:created': new Date().toISOString()
         }];
     }
 

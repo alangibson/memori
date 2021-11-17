@@ -9,6 +9,7 @@ import { ChildProcess } from 'child_process';
 import { ICommand, ICommittable, IMemory } from './models.js'
 import { Commands } from "./commands.js";
 import { FilesystemCrawler } from "./crawler.js";
+import { Config } from "./configuration.js";
 
 async function echoResults(recall: IRecalledMemory[]) {
     recall.forEach((rm: IRecalledMemory, i) => {
@@ -226,7 +227,7 @@ async function interactiveInput(memory: Mind) {
  */
 async function main() {
 
-    const mindName = 'main';
+    const mindName = await Config.getInstance().newMind();
     const mind = new Mind(mindName);
 
     // Load saved Memory from disk

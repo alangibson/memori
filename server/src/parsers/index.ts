@@ -1,3 +1,4 @@
+import { ISettings } from "src/configuration";
 import { ICommittable, IMemory } from "../models";
 import { AudioParser } from "./audio";
 import { BinaryParser } from './binary';
@@ -25,25 +26,29 @@ export function nameFromString(s: string): string {
 
 export class Parser implements IParser {
 
+    private settings: ISettings;
+
+    constructor(settings: ISettings) {
+        this.settings = settings;
+    }
+
     async parse(response: ICommittable): Promise<IMemory[]> {
         if (response.encodingFormat.startsWith('text/html')) {
             return new WebPageParser().parse(response);
         } else if (response.encodingFormat.startsWith('image/')) {
-            // TODO languages should be user configurable
-            return new ImageParser('eng').parse(response);
+            return new ImageParser(this.settings.ocrLanguage).parse(response);
         } else if (response.encodingFormat.startsWith('application/pdf')) {
             return new PdfParser().parse(response);
         } else if (response.encodingFormat.startsWith('application/')) {
             // Send all other application types through the generic text extractor
             return new DocumentParser().parse(response);
         } else if (response.encodingFormat.startsWith('audio/')) {
-            // TODO make model configurable
-            return new AudioParser(`${process.cwd()}/vosk-model-en-us-0.22`)
+            return new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
                 .parse(response);
         } else if (response.encodingFormat.startsWith('video/')) {
+            // TODO create a VideoParser
             // FIXME temporary hack because audio/webm file is uploade as video/webm
-            // TODO make model configurable
-            return new AudioParser(`${process.cwd()}/vosk-model-en-us-0.22`)
+            return new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
                     .parse(response);
         } else if (response.encodingFormat.startsWith('text/plain') || 
                    response.encodingFormat.startsWith('text/markdown')) {

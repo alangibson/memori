@@ -7,7 +7,7 @@ describe('AudioParser' , () => {
 
     it('parse()', async () => {
         // Given
-        const parser = new AudioParser(`${process.cwd()}/vosk-model-en-us-0.22`)
+        const parser = new AudioParser(`${process.cwd()}/etc/vosk-model-en-us-0.22`)
         const blob = await fs.readFile('./test/data/Welcome.mp3');
         // When
         const out = await parser.parse({
