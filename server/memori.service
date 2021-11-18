@@ -3,7 +3,7 @@ Description=Memori
 
 [Service]
 WorkingDirectory=/root/memori/server
-ExecStart=npm run serve --bind=0.0.0.0 --port=4321 --data=/mnt/volume_fra1_01/
+ExecStart=npm start --bind=0.0.0.0 --port=4321 --data=/mnt/volume_fra1_01/
 Restart=always
 
 [Install]

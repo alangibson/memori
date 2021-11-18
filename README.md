@@ -5,25 +5,55 @@
 
 ## Installation
 
+### Local serer
+
 ```
+# Clone Memori application
+git clone https://github.com/alangibson/memori.git
+
 # Install Vosk
 pip3 install vosk
 curl -L -O http://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip
+pushd memori/etc
 unzip vosk-model-en-us-0.22.zip
+popd
 
 # Install ffmpeg
 sudo apt install ffmpeg
-
-# Clone Memori application
-git clone https://github.com/alangibson/memori.git
 
 # Run the server
 cd memori/server
 npm install -D
 npm run start:test
 # Open 'Connect via secure tunnel' from output in the browser
+```
+
+### Set up production server
 
 ```
+curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+sudo bash nodesource_setup.sh
+sudo apt install -y nodejs python-is-python3
+
+git clone https://github.com/alangibson/memori.git
+cd memori/server
+
+# Install webhook
+# https://dev.to/severo/using-webhooks-to-update-a-self-hosted-jekyll-blog-59al
+sudo cp webhook.conf /etc/
+echo -n "" | openssl sha1 -hmac "iuyhu87654ejytIUYTplkjhgfdadf"
+sudo apt install webhook
+curl -v -X POST -H "X-Hub-Signature: sha1=3b7e3207710151154efa6eb22e6fcc5f052932dc" \
+    http://localhost:9000/hooks/memori
+
+npm i --also=dev
+
+sudo cp memori.service /etc/systemd/system/memori.service
+sudo systemctl daemon-reload
+sudo systemctl enable memori
+sudo systemctl start memori
+```
+
 
 ## Usage
 
@@ -56,24 +86,6 @@ cd extension
 npx web-ext run --verbose
 
 # 1) Go go about:debugging 2) Click "This Firefox" 3) Click "Inspect" under plugin
-```
-
-### Set up production server
-
-```
-curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
-sudo bash nodesource_setup.sh
-sudo apt install -y nodejs python-is-python3
-
-git clone https://github.com/alangibson/memori.git
-cd memori/server
-
-npm i --also=dev
-
-sudo cp memori.service /etc/systemd/system/memori.service
-sudo systemctl daemon-reload
-sudo systemctl enable memori
-sudo systemctl start memori
 ```
 
 ### Update production server
