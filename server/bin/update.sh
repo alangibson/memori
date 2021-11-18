@@ -8,8 +8,13 @@
 
 systemctl stop memori
 
+# Commented out because this could seriously mess up a dev system
+# git reset --hard HEAD
 git pull
-sudo cp server/memori.service /etc/systemd/system/memori.service
-systemctl daemon-reload
 
+cd server
+npm i --also=dev
+sudo cp memori.service /etc/systemd/system/memori.service
+
+systemctl daemon-reload
 systemctl start memori
