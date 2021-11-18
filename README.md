@@ -41,10 +41,7 @@ cd memori/server
 # Install webhook
 # https://dev.to/severo/using-webhooks-to-update-a-self-hosted-jekyll-blog-59al
 sudo cp webhook.conf /etc/
-echo -n "" | openssl sha1 -hmac "iuyhu87654ejytIUYTplkjhgfdadf"
 sudo apt install webhook
-curl -v -X POST -H "X-Hub-Signature: sha1=3b7e3207710151154efa6eb22e6fcc5f052932dc" \
-    http://localhost:9000/hooks/memori
 
 npm i --also=dev
 
