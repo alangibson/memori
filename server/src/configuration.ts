@@ -28,14 +28,14 @@ export interface ISettings {
 }
 
 export class Config {
-    
+
     private static instance: Config;
-    private _settings: ISettings|undefined;
-    private _security: ISecurity|undefined;
+    private _settings: ISettings | undefined;
+    private _security: ISecurity;
 
     private constructor(settings?: ISettings, security?: ISecurity) {
         this._settings = settings;
-        this._security = security;
+        this._security = security || { tokens: {} };
     }
 
     static getInstance() {
@@ -46,20 +46,25 @@ export class Config {
     }
 
     private async load() {
-        
+
+        // TODO create default settings.json if not exists
+
         // Read in settings.json
         this._settings = JSON.parse(
-            await fs.readFile(`${process.cwd()}/etc/settings.json`, 
+            await fs.readFile(`${process.cwd()}/etc/settings.json`,
                 { encoding: 'utf8' }));
 
-        this._security = JSON.parse(
-            await fs.readFile(`${process.cwd()}/etc/security.json`, 
-                { encoding: 'utf8' }))
-
+        try {
+            this._security = JSON.parse(
+                await fs.readFile(`${process.cwd()}/etc/security.json`,
+                    { encoding: 'utf8' }))
+        } catch (e) {
+            console.warn(`No security.json found. Creating default empty structure.`);
+        }
     }
 
     private async ensureLoaded() {
-        if (! this._settings || ! this._security)
+        if (!this._settings || !this._security)
             await this.load();
     }
 
@@ -72,7 +77,7 @@ export class Config {
 
     async save() {
         // Save security.json
-        await fs.writeFile(`${process.cwd()}/etc/security.json`, 
+        await fs.writeFile(`${process.cwd()}/etc/security.json`,
             JSON.stringify(this._security), { encoding: 'utf8' });
 
         // TODO save settings.json?
@@ -102,9 +107,9 @@ export class Config {
             scope: scope
         };
         return token;
-    }   
+    }
 
-    async getAuthorizationByToken(token: string): Promise<AccessRule|null> {
+    async getAuthorizationByToken(token: string): Promise<AccessRule | null> {
         await this.ensureLoaded();
         // Read in security file
         // const security = JSON.parse(await fs.readFile(argv.security, { encoding: 'utf8' }));
@@ -121,7 +126,7 @@ export class Config {
             };
             return authorization;
         }
-    
+
     }
 
 }
