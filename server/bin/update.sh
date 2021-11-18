@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash -e
 
 #
 # https://dev.to/severo/using-webhooks-to-update-a-self-hosted-jekyll-blog-59al 
