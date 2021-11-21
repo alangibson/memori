@@ -19,7 +19,7 @@ export class Commands {
         await fs.mkdir(this.path, { recursive: true });
 
         // Write to dated file
-        const filename: string = `${this.path}/${new Date().toISOString()}-${(Math.random() + 1).toString(36).substring(2)}.json`;
+        const filename: string = `${this.path}/${new Date().getTime()}-${(Math.random() + 1).toString(36).substring(2)}.json`;
         await fs.appendFile(filename, JSON.stringify(command));
 
         // Append to file

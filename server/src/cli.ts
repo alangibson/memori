@@ -227,8 +227,12 @@ async function interactiveInput(memory: Mind) {
  */
 async function main() {
 
-    const mindName = await Config.getInstance().newMind();
-    const mind = new Mind(mindName);
+    const mindName = 'main';
+    const mind = await Config.getInstance().newMind({
+        name: mindName,
+        scope: "all",
+        space: "TODO"
+    });
 
     // Load saved Memory from disk
     await mind.load();

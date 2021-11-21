@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import { v4 as uuid } from 'uuid';
-import ngrok from 'ngrok';
+// import ngrok from 'ngrok';
+import localtunnel from 'localtunnel';
 import { URL } from 'url';
 import express from 'express';
 import multer from 'multer';
@@ -340,8 +341,8 @@ app.post("/mind", async (req, res) => {
 
     const storageRoot: string = 'store';
     const spaceName: string = uuid();
-    const mindName: string|undefined = req.body.mindName?.toString();
-    
+    const mindName: string | undefined = req.body.mindName?.toString();
+
     if (!mindName)
         return res.status(400)
             .send('No mind name provided')
@@ -350,9 +351,9 @@ app.post("/mind", async (req, res) => {
     const config: Config = Config.getInstance();
     const token: string = await config.allow(spaceName, mindName, 'all');
     await config.save();
-    
+
     await Mind.create(storageRoot, spaceName, mindName);
-    
+
     // Log user in and redirect back to home page
     res.status(200)
         .setHeader('Set-Cookie', `Authorization=${token}; Max-Age>=0; path=/; HttpOnly; SameSite=Lax`)
@@ -395,12 +396,18 @@ if (process.env.NODE_ENV == 'development') {
 } else if (process.env.NODE_ENV == 'test') {
 
     // Open ngrok tunnel
-    const ngrokUrl = await ngrok.connect(argv.port);
+    // const ngrokUrl = await ngrok.connect(argv.port);
+
+    const tunnel = await localtunnel({ port: argv.port });
+
+    tunnel.on('close', () => {
+        console.info(`Shutting down tunnel ${tunnel.url}`);
+    });
 
     // Start the express server
     app.listen(argv.port, argv.bind, () => {
         console.info(`Server started at http://${argv.bind}:${argv.port}`);
-        console.info(`Connect via secure tunnel at ${ngrokUrl}`);
+        console.info(`Connect via secure tunnel at ${tunnel.url}`);
     });
 
 } else {
