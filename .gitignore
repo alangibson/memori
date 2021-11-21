@@ -9,4 +9,4 @@ dist/
 vosk*
 dump
 server/store
-
+server/build

@@ -5,7 +5,7 @@
 
 ## Installation
 
-### Local serer
+### Run local server on Linux
 
 ```
 # Clone Memori application
@@ -28,7 +28,31 @@ npm run start:test
 # Open 'Connect via secure tunnel' from output in the browser
 ```
 
-### Set up production server
+### Run local server on Windows
+
+```
+Install node >= 16 from https://nodejs.org/en/download/
+If you don't have Python and Visual Studio Build Tools already installed,
+  check "Automatically install the necessary tools"
+  on the "Tools for native modules" screen
+
+pip install vosk
+
+Download and unzip from https://github.com/alangibson/memori
+Extract as dir named memori
+cd to memori\server dir
+
+npm i --also=dev
+
+Download and extract http://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip
+  to memori\server\etc
+
+set PATH=%cd%\node_modules\ffmpeg-static;%PATH%
+set NODE_ENV=test
+npm start
+```
+
+### Set up production server on Linux
 
 ```
 curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh

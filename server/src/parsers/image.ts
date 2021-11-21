@@ -1,4 +1,4 @@
-import { Tensor3D, Tensor4D } from '@tensorflow/tfjs';
+import { Tensor3D } from '@tensorflow/tfjs';
 import tfModel, { DetectedObject } from '@tensorflow-models/coco-ssd';
 import tfNode from '@tensorflow/tfjs-node';
 import Tesseract, { RecognizeResult } from 'tesseract.js';
@@ -29,9 +29,11 @@ export class ImageParser implements IParser {
         );
 
         // Perform image recognition
-        const image: Tensor3D|Tensor4D = tfNode.node.decodeImage(response.blob);
+        // Casting to Tensor3D because that is alway returned when expandAnimations=false
+        const image: Tensor3D = <Tensor3D>tfNode.node.decodeImage(response.blob, undefined, undefined, false)
+            // make sure we only have 3 channels or model.detect() will explode
+            .slice([0], [-1, -1, 3]);
         const model = await tfModel.load();
-        // @ts-ignore because we will never have a Tensor4D image
         const detections: DetectedObject[] = await model.detect(image);
         const keywords: string = detections
             .map((detection) => detection.class)
