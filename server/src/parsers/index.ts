@@ -34,28 +34,28 @@ export class Parser implements IParser {
 
     async parse(response: ICommittable): Promise<IMemory[]> {
         if (response.encodingFormat.startsWith('text/html')) {
-            return new WebPageParser().parse(response);
+            return await new WebPageParser().parse(response);
         } else if (response.encodingFormat.startsWith('image/')) {
-            return new ImageParser(this.settings.ocrLanguage).parse(response);
+            return await new ImageParser(this.settings.ocrLanguage).parse(response);
         } else if (response.encodingFormat.startsWith('application/pdf')) {
-            return new PdfParser().parse(response);
+            return await new PdfParser().parse(response);
         } else if (response.encodingFormat.startsWith('application/')) {
             // Send all other application types through the generic text extractor
-            return new DocumentParser().parse(response);
+            return await new DocumentParser().parse(response);
         } else if (response.encodingFormat.startsWith('audio/')) {
-            return new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
+            return await new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
                 .parse(response);
         } else if (response.encodingFormat.startsWith('video/')) {
             // TODO create a VideoParser
             // FIXME temporary hack because audio/webm file is uploade as video/webm
-            return new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
+            return await new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
                     .parse(response);
         } else if (response.encodingFormat.startsWith('text/plain') || 
                    response.encodingFormat.startsWith('text/markdown')) {
-            return new TextParser().parse(response);
+            return await new TextParser().parse(response);
         } else {
             // Last ditch effort
-            return new BinaryParser().parse(response);
+            return await new BinaryParser().parse(response);
         }
     }
 

@@ -49,7 +49,7 @@ export interface IRecalledMemory {
 export class Mind implements IPersistable {
 
     private path: string;
-    private commands: Commands;
+    public commands: Commands;
     private index: Index;
     private config: Config;
 
@@ -100,15 +100,13 @@ export class Mind implements IPersistable {
         }
         // otherwise we assume we already have a usable resource (ie. blob and mimeType is set)
 
-        // rememberable now definitely as a location property,
-        // so we can upgrade its type
-        const parseable: ICommittable = <ICommittable>rememberable;
-
         // Dispatch Response to parser
-        let things: IMemory[] = await this.parse(parseable);
+        let things: IMemory[] = await this.parse(rememberable);
 
         // Special case. WebPage is always position 0
         const memory = things[0];
+
+        // TODO what about attachments to all the other things in array?
 
         // Add attachments to primary memory
         memory._attachments = {
@@ -121,7 +119,8 @@ export class Mind implements IPersistable {
         // Enhance all schemas
         // WARNING: @id of subthings can be changed by enhancers!
         things = await Promise.all(
-            things.map(async (thing) => new Enhancer().enhance(thing)));
+            things.map(async (thing) => new Enhancer(await this.config.settings())
+                .enhance(thing)));
 
         // TODO enhance all thing['m:embedded']
             
@@ -134,6 +133,8 @@ export class Mind implements IPersistable {
         return memory;
     }
 
+    // Remember something.
+    // This method mainly exists to add missing info before commit().
     async remember(rememberable: IRememberable): Promise<IMemory> {
 
         // Upgrade type since since we will always have a location
@@ -144,7 +145,6 @@ export class Mind implements IPersistable {
         await this.commands.log({ action: 'remember', ...commitable });
 
         // then commit to memory
-        // @ts-ignore because we definitely have a location now
         return this.commit(commitable);
     }
 

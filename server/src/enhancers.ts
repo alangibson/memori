@@ -3,6 +3,8 @@ import mime from 'mime-types';
 import youtubedl, { YtResponse } from 'youtube-dl-exec';
 import { MediaObject } from "schema-dts";
 import { IIndexable, IMemory } from "./models";
+import { SpeachToText } from "./stt";
+import { ISettings } from "./configuration";
 
 // export type ProcessingResultType = [IMemory, IRememberable]
 
@@ -36,9 +38,16 @@ interface ISchemaEnhancer {
 
 export class Enhancer implements ISchemaEnhancer {
 
+    private settings: ISettings;
+
+    constructor(settings: ISettings) {
+        this.settings = settings;
+    }
+
     async enhance(media: IIndexable): Promise<IMemory> {
         if (media["@type"] == 'VideoObject')
-            return new VideoSchemaEnhancer().enhance(media);
+            return new VideoSchemaEnhancer(`${process.cwd()}/etc/${this.settings.voskModel}`)
+                .enhance(media);
         else
             // TODO is this cast safe?
             return <IMemory>media;
@@ -48,12 +57,19 @@ export class Enhancer implements ISchemaEnhancer {
 
 export class VideoSchemaEnhancer implements ISchemaEnhancer {
 
+    private stt: SpeachToText;
+
+    constructor(modelPath: string) {
+        this.stt = new SpeachToText(modelPath);
+    }
+
     async enhance(media: IIndexable): Promise<IMemory> {
 
-        const [ basename, format ] = [ Buffer.from(media.url+media['@type']).toString('base64url'), 'mp4' ];
+        const [ basename, format ] = [ Buffer.from(media.url+media['@type'])
+            .toString('base64url'), 'mp4' ];
         const filename = `${basename}.${format}`;
 
-        console.log(`Getting video ${media.url}`);
+        console.log(`VideoSchemaEnhancer.enhance() : Getting video ${media.url}`);
 
         // Get video info with youtube-dl
         const response: YtResponse = await youtubedl(media.url.toString(), {
@@ -66,28 +82,27 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
         });
 
         // Actually download the file
-        // await youtubedl(media.url, {
-        //     noCallHome: true,
-        //     noCheckCertificate: true,
-        //     youtubeSkipDashManifest: true,
-        //     format: format,
-        //     output: filename
-        // });
-        console.warn(`VideoSchemaEnhancer.enhance() : Youtube-dl download is disabled!`);
+        await youtubedl(media.url.toString(), {
+            callHome: false,
+            noCheckCertificate: true,
+            youtubeSkipDashManifest: true,
+            format: format,
+            output: filename
+        });
+        // console.warn(`VideoSchemaEnhancer.enhance() : Youtube-dl download is disabled!`);
 
         // Read downloaded file in from local drive
-        // const mimeType: string|false = mime.lookup(filename);
-        // if (! mimeType)
-        //     throw new Error(`Could not determine mime type for : ${filename}`);
-        // const buffer: Buffer = await fs.readFile(filename);
+        const mimeType: string|false = mime.lookup(filename);
+        if (! mimeType)
+            throw new Error(`Could not determine mime type for : ${filename}`);
+        const buffer: Buffer = await fs.readFile(filename);
 
-        // TODO run vosk on blob
+        // Run speach to text on video
+        console.log(`VideoSchemaEnhancer.enhance() : Performing speach-to-text on ${media.url}`);
+        media.text = media.text + ' ' + await this.stt.recognize(buffer);
 
         // then delete it
-        // await fs.unlink(filename);
-
-        const buffer = Buffer.from('TODO');
-        const mimeType = `video/${format}`;
+        await fs.unlink(filename);
 
         // TODO site name is response.extractor
         // duration (seconds?)

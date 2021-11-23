@@ -231,7 +231,7 @@ async function main() {
     const mind = await Config.getInstance().newMind({
         name: mindName,
         scope: "all",
-        space: "TODO"
+        space: "73076540-ac3b-419c-bbb6-c5abf92d4916"
     });
 
     // Load saved Memory from disk
@@ -297,7 +297,7 @@ async function main() {
             // Clear memory
             await mind.clear();
             // read in command.log line by line
-            await new Commands(`./${mindName}/commands`)
+            await mind.commands
                 .replay(async (command: ICommand) => {
                     if (command.action) {
                         try {
@@ -309,8 +309,8 @@ async function main() {
                             console.error('Failed to reload Command', command,
                                 'Moving on to next item', e);
                         }
-
                     }
+                    // else do nothing
                 });
             // then save
             await mind.save();

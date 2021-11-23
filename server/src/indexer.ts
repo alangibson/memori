@@ -5,8 +5,9 @@ import pouchdbFind from 'pouchdb-find';
 import pouchdbUpsert from 'pouchdb-upsert';
 import flexSearch, { IndexSearchResult } from 'flexsearch';
 import { IPersistable, IRecalledMemory, contentHashUrl } from "./index";
-import { IIndexable, IMemory } from "./models";
+import { IIndexable, IMemory, IRememberable } from "./models";
 import pouchdbAdapterMemory from 'pouchdb-adapter-memory';
+import { filter } from "cheerio/lib/api/traversing";
 
 PouchDB.default.plugin(pouchdbFind);
 PouchDB.default.plugin(pouchdbUpsert);
@@ -108,7 +109,7 @@ export class Index implements IPersistable {
     constructor(path: string) {
         this.path = path;
         // Start with an in-memory PouchDB
-        this.db = new PouchDB.default(`${this.path}/db`, {adapter: 'memory'});
+        this.db = new PouchDB.default(`${this.path}/db`, { adapter: 'memory' });
         this.idx = new FlexsearchSearch(this.db);
     }
 
@@ -130,15 +131,20 @@ export class Index implements IPersistable {
         await Promise.all(
             storables.map(async (storable: IIndexable) => {
 
-                console.debug(`Index.store() : Upserting ${storable['@id']}`);
+                console.debug(`Index.store() : Upserting ${storable["@type"]} ${storable['@id']}`);
 
                 try {
 
                     await this.db.upsert(storable["@id"], (existing) => {
+
+                        // if (existing)
+                        //     console.debug(`Index.store() : Found existing stored thing ${existing._id}`, existing);
+
                         // @ts-ignore becasue were just making sure that there is no _rev
                         // delete storable._rev;
+
                         const combined = { ...existing, ...storable };
-                        
+
                         // delete storable._attachments;
                         // console.log('storable', JSON.stringify(storable, null, 2));
 
@@ -146,7 +152,7 @@ export class Index implements IPersistable {
                     });
 
                     // Update in search index
-                    this.idx.update(new URL(storable["@id"]), storable.text);
+                    await this.idx.update(new URL(storable["@id"]), storable.text);
 
                 } catch (e) {
                     console.error('EXPLODED', e);
@@ -216,24 +222,39 @@ export class Index implements IPersistable {
         const searchResults: URL[] = await this.idx.search(q);
 
         // then load object for each returned result
-        const recalled: IRecalledMemory[] = await Promise.all(
+        let recalled: (IRecalledMemory|undefined)[] = await Promise.all(
             // Search Index
             searchResults
                 // then Retrieve objects from Store
-                .map(async (id: URL): Promise<IRecalledMemory> => {
-
-                    // TODO It's possible we won't be able to get doc (ie it's not in the db)
-
+                .map(async (id: URL): Promise<IRecalledMemory|undefined> => {
+                    // It's possible we won't be able to get doc (ie it's not in the db)
                     // Build IRecalledMemory
-                    return {
-                        thing: await this.getById(id)
-                    };
+                    try {
+                        return {
+                            thing: await this.getById(id)
+                        };
+                    } catch (e) {
+                        // We fill filter these out in the next step
+                        console.warn(`Index.search() : Found ${id} in search index, but not in db`);
+                        return undefined;
+                    }
+                    
                 })
         );
 
-        // TODO then deduplicate search results based on @id
+        // Filter out those where we couldn't get() a memory
+        // Casting becase we are filtering undefined here
+        const filteredRecalled: IRecalledMemory[] = <IRecalledMemory[]> recalled
+            // Only keep top-level memories
+            .filter((recalled: IRecalledMemory|undefined): boolean =>
+                recalled != undefined 
+                    && recalled?.thing != undefined
+                    && recalled?.thing["m:embeddedIn"] == undefined)
+
+
+        // then deduplicate search results based on @id
         // const seenIds: string[] = [];
-        // const filteredSearchResults: IRecalledMemory[] = unfilteredSearchResults
+        // const filteredSearchResults: IRecalledMemory[] = recalled
         //     .filter((result: IRecalledMemory): boolean => {
         //         const recalled: IRecalledMemory = result;
         //         if (seenIds.includes(recalled.thing['@id'])) {
@@ -247,13 +268,13 @@ export class Index implements IPersistable {
 
         // TODO sort results some way?
 
-        return recalled;
+        return filteredRecalled;
     }
 
     // Dumps a bunch of docuemnts
     // Parameters
     //   sort: key to sort on
-    async all(limit: number = 20, skip: number = 0,
+    async all(limit: number = 10000, skip: number = 0,
         sort: string = 'm:created'): Promise<IRecalledMemory[]> {
 
         // TODO do this with db.find(), not db.allDocs()
@@ -271,6 +292,8 @@ export class Index implements IPersistable {
             .filter((doc) => doc.doc != undefined)
             // Throw out internal configuration documents
             .filter((doc) => !doc.id.startsWith('memori/'))
+            // Only keep top-level memories
+            .filter((doc) => doc.doc?.["m:embeddedIn"] == undefined)
             // Transform returned row into IMemory
             .map((doc): IRecalledMemory => {
                 return {

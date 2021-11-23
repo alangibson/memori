@@ -8,6 +8,9 @@
 ### Run local server on Linux
 
 ```
+# Install Tesseract
+sudo apt install tesseract-ocr
+
 # Clone Memori application
 git clone https://github.com/alangibson/memori.git
 
@@ -17,9 +20,6 @@ curl -L -O http://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip
 pushd memori/etc
 unzip vosk-model-en-us-0.22.zip
 popd
-
-# Install ffmpeg
-sudo apt install ffmpeg
 
 # Run the server
 cd memori/server

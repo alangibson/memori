@@ -84,17 +84,21 @@ export function extractRssFeeds(doc: Document, base: URL) {
 
 // Come up with some sort of @id URL
 function makeIdUrl(schema: IRawSchemaOrg, microdata: IMicrodata): URL {
-    let id: URL | null = null;
-    // @ts-ignore
-    let idUrl: string = schema['@id'] || schema.url || schema.embedUrl || cidUrl(Buffer.from(JSON.stringify(schema)));
-    try {
-        id = new URL(idUrl);
-    } catch (e) {
-        // See if it is just a relative url
-        const c = new URL(microdata.general.canonical || 'throw an error');
-        id = new URL(`${c.origin}/${idUrl}`);
-    }
-    return id;
+    if ('@id' in schema)
+        try {
+            // @ts-ignore because we catch errors
+            return new URL(schema['@id']);
+        } catch (e) {
+            try {
+                // See if it is just a relative url
+                const c = new URL(microdata.general.canonical || 'throw an error');
+                return new URL(`${c.origin}/${schema['@id']}`);
+            } catch (e) {
+                return cidUrl(Buffer.from(JSON.stringify(schema)));
+            }
+        }
+    else
+        return cidUrl(Buffer.from(JSON.stringify(schema)));
 }
 
 function extractTextFromDocument(doc: Document): string {
@@ -203,12 +207,11 @@ export class WebPageParser implements IParser {
                         // You never know what input you will get, so we need to be extra-flexible here.
                         '@context': schema['@context'] || 'https://schema.org',
                         '@type': schema['@type'] || 'Thing',
-                        // it would be better to add a content-based id later
                         '@id': makeIdUrl(schema, microdata).toString(),
                         url: url || makeIdUrl(schema, microdata),
                         name: schema.name || schema.title || schema.headline || makeIdUrl(schema, microdata).toString(),
-                        abstract: abstractFromSchema(schema),
-                        text: textFromSchema(schema),
+                        abstract: schema.abstract || abstractFromSchema(schema),
+                        text: schema.text || textFromSchema(schema),
                         encodingFormat: encodingFormat || 'application/ld+json',
                         'm:created': new Date().toISOString()
                     }
@@ -227,7 +230,7 @@ export class WebPageParser implements IParser {
 
         // All embedded schemas worth keeping
         const microdata: IMicrodata = await extractMicrodataFromHtml(html);
-        const extractedSchemas: IMemory[] = await this.extract(microdata);
+        let extractedSchemas: IMemory[] = await this.extract(microdata);
 
         // Parse interesting info from the web page we are parsing
         const doc: Document = documentFromHtml(html, response.encodingFormat);
@@ -243,7 +246,7 @@ export class WebPageParser implements IParser {
             var webPage: IMemory = extractedSchemas[webPageIndex];
             webPage.text += text;
             // then delete index from schemas so we don't process it again later
-            extractedSchemas.splice(webPageIndex, 1);
+            extractedSchemas = extractedSchemas.splice(webPageIndex, 1);
         } else {
             // We must always return at least 1 schema.
             // For web pages, we default to a WebPage schema.
@@ -266,190 +269,16 @@ export class WebPageParser implements IParser {
         // TODO check html for rss/atom links. If found, add a MediaObject to schemas
         // TODO rss/atom feed MediaObject should be linked
 
-        // Add to all schemas an m:embeddedIn @id ref pointing to WebPage 
+        // TODO turn these into @id refs, not actual objects
         webPage['m:embedded'] = extractedSchemas;
+
+        // Add to all schemas an m:embeddedIn @id ref pointing to WebPage 
         for (const i in extractedSchemas) {
             extractedSchemas[i]['m:embeddedIn'] = webPage['@id'];
         }
 
-        // TODO Process all other schemas as children of WebPage
-        // Add to m:videos
-        //      const videos: IMemory[] = schemas.filter((schema) => schema['@type'] == 'VideoObject');
-        // Add to m:images
-        //      const images: IMemory[] = schemas.filter((schema) => schema['@type'] == 'ImageObject');
-        // const audios: IMemory[] = schemas.filter((schema) => schema['@type'] == 'AudioObject');
-        // const persons: IMemory[] = schemas.filter((schema) => schema['@type'] == 'Person');
-        // const organizations: IMemory[] = schemas.filter((schema) => schema['@type'] == 'Organization');
-        // const apps: IMemory[] = schemas.filter((schema) => schema['@type'] == 'SoftwareApplication');
-        // const feeds: IMemory[] = schemas.filter((schema) => schema['@type'] == 'MediaObject');
-        //      Add MediaObject to webPage.ecodings
-
         // For now just throw in all remaning schemas
         return [webPage, ...extractedSchemas];
     }
-
-    // Extract microdata/Schema.org schemas from web page
-    // Also create a synthetic WebPage schema if one is not embedded already
-    // There is always at least one item in the return array
-    // First item in return array is always a WebPage
-    // async parse(response: ICommittable): Promise<IMemory[]> {
-
-    //     // Marshal blob to string of HTML
-    //     // TODO determine encoding from Content-Type header
-    //     const html: string = response.blob.toString('utf8');
-
-    //     // All embedded schemas worth keeping
-    //     const schemas: IMemory[] = await this.extract(html);
-
-    //     const id: string = response.location.toString();
-    //     const doc: Document = documentFromHtml(html, response.mimeType);
-    //     const text: string = stripWhitespace(extractTextFromDocument(doc));
-
-    //     // TODO make sure there is a WebPage in postion 1
-    //     const i: number = schemas.findIndex((schema) => schema['@type'] == 'WebPage')
-    //     if (i == 0) {
-
-    //         // Enhance existing WebPage
-    //         schemas[i]['@id'] = schemas[i]['@id'] || id;
-    //         // It should always be safe to overwrite text as we want the most possible
-    //         schemas[i].text = text;
-    //         schemas[i].abstract = schemas[i].abstract || abstractFromString(text);
-
-    //     } else if (i >= 1) {
-
-    //         // Enhance existing WebPage
-    //         schemas[i]['@id'] = schemas[i]['@id'] || id;
-    //         // It should always be safe to overwrite text as we want the most possible
-    //         schemas[i].text = text;
-    //         schemas[i].abstract = schemas[i].abstract || abstractFromString(text);
-
-    //         // Just move it to position 0
-    //         const wp = schemas[i];
-    //         schemas = schemas.filter((schema) => schema['@type'] !== "WebPage");
-    //         schemas.unshift(wp);
-
-    //     } else {
-    //         // Make a new web page
-    //         const id: string = response.location.toString();
-    //         schemas.unshift({
-    //             "@context": 'https://schema.org',
-    //             "@type": "WebPage",
-    //             "@id": id,
-    //             url: response.location.toString(),
-    //             name: microdata?.general?.title?.trim() || doc?.title?.trim(),
-    //             abstract: abstractFromString(text),
-    //             description: microdata?.general?.description?.trim() || abstractFromString(text),
-    //             dateCreated: doc.lastModified,
-    //             dateModified: doc.lastModified,
-    //             datePublished: doc.lastModified,
-    //             encodingFormat: response.mimeType,
-    //             // This is what we index for full text search
-    //             text: text,
-    //         });
-    //     }
-
-    //     return schemas;
-    // }
-
-    // async parse(response: ICommittable): Promise<IMemory> {
-
-    //     const extracted: IMemory[] = await this.extract(response);
-    //     console.log(JSON.stringify(extracted, null, 2));
-
-    // Marshal blob to string of HTML
-    // TODO determine encoding from Content-Type header
-    // const html: string = response.blob.toString('utf8');
-
-    // If there is no microdata in page, then microdata is null
-    // let microdata: IMicrodata | null = null;
-    // try {
-    //     microdata = await extractMicrodataFromHtml(html);
-    // } catch (e) { } // Error: No microdata found in page
-
-    // Process microdata
-    // TODO only keep @type Product, VideoObject, SoftwareApplication
-    // TODO special handling for BreadcrumbList. Use breadcrumb property
-    // TODO special handling for VideoObject. Use video property
-    // TODO special handling for AudioObject,Clip,MusicRecording. Use audio property
-
-    // const doc: Document = documentFromHtml(html, response.mimeType);
-
-    // Parse to Schema.org/WebPage
-    // const id: string = response.location.toString();
-    // const text: string = stripWhitespace(extractTextFromDocument(doc));
-
-    // Insert a link relation for each embedded schema type we know how to handle
-    // microdata.related = microdata.schemaOrg
-    //     ?.map((thing: IMemory) => {
-    //         // Make sure the thing has a text field
-    //         if (!thing.text?.length)
-    //             // @ts-ignore
-    //             thing.text = `${thing.name} ${thing.abstract} ${thing.description} ${thing.author?.name}`;
-    //         if (thing['@type'] == 'VideoObject')
-    //             return { video: thing };
-    //         // TODO all other supported subschemas
-    //     })
-    //     .reduce((prev: {}, curr: {}) => Object.assign(prev, curr), {});
-
-    // let video: VideoObject | null = null;
-    // if (microdata?.related?.video) {
-    //     const videoId: string = microdata?.related?.video?.["@id"] || id;
-    //     video = {
-    //         "@context": 'https://schema.org',
-    //         "@type": microdata?.related?.video?.["@type"] || 'VideoObject',
-    //         "@id": videoId,
-    //         // Must be @id of parent page so we can look it up later
-    //         mainEntityOfPage: id,
-    //         // TODO better default name
-    //         name: microdata?.related?.video?.name || '',
-    //         url: microdata?.related?.video?.url?.toString() || id,
-    //         text: microdata?.related?.video?.text?.toString() ||
-    //             `${microdata?.related?.video?.name} ${microdata?.related?.video?.abstract} 
-    //             ${microdata?.related?.video?.description} ${microdata?.related?.video?.author}`
-    //     };
-    // }
-
-    // TODO SoftwareSourceCode
-    // TODO Movie
-    // TODO NewsArticle
-    // TODO Article
-    // TODO Person
-    // TODO WebSite
-    // TODO Organizatoin
-
-    // TODO web pages may contain a WebPage. If so just use that instead
-
-    // const webpage: WebPage = {
-    //     "@context": 'https://schema.org',
-    //     "@type": "WebPage",
-    //     "@id": id,
-    //     url: response.location.toString(),
-    //     name: microdata?.general?.title?.trim() || doc?.title?.trim(),
-    //     abstract: abstractFromString(text),
-    //     description: microdata?.general?.description?.trim() || abstractFromString(text),
-    //     dateCreated: doc.lastModified,
-    //     dateModified: doc.lastModified,
-    //     datePublished: doc.lastModified,
-    //     encodingFormat: response.mimeType,
-    //     // This is what we index for full text search
-    //     text: text,
-
-    //     // TODO only do this if we actually have a VideoObject in microdata
-    //     // @ts-ignore because no idea why this causes an error
-    //     video: video,
-
-    //     // FIXME
-    //     // 'breadcrumb': microdata?.related?.breadcrumb,
-    //     // 'softwareApplication': microdata?.related?.softwareApplication,
-    //     // 'product': microdata?.related?.product,
-
-    //     // TODO locale from microdata.metatags['og:locale'][0]
-    //     // TODO get "thumbnailUrl" from browser plugin
-    //     // TODO extract "keywords" for search index?
-    //     // TODO set "headline" to first H* tag?
-    // };
-
-    //     return webpage;
-    // }
 
 }

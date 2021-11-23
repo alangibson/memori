@@ -193,12 +193,6 @@ app.get('/recall',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
-        function stripAttachments(recalled: IRecalledMemory) {
-            delete recalled.thing._attachments;
-            delete recalled.thing.video?._attachments;
-            return recalled;
-        }
-
         // Get org and mind via tokens structure
         // Casting to AccessRule because we should return Unauthorized if no access
         const authorization: AccessRule = <AccessRule>req.user;
@@ -213,7 +207,7 @@ app.get('/recall',
 
             if (found)
                 return res.status(200)
-                    .json(stripAttachments(found))
+                    .json(found)
                     .end();
             else
                 return res.status(404)
@@ -225,17 +219,12 @@ app.get('/recall',
             await memory.load();
 
             // Free text search
-            const found: IRecalledMemory[] = await memory.search(req.query.q.toString());
-
-            // Strip _attachments
-            // TODO do this in indexer
-            let cleaned = found
-                .map((recalled: IRecalledMemory) => stripAttachments(recalled))
+            let found: IRecalledMemory[] = await memory.search(req.query.q.toString());
 
             // Sort by req.query.sort
             if (req.query.sort == 'created:desc') {
                 console.debug(`Sorting by ${req.query.sort}`);
-                cleaned = cleaned
+                found = found
                     // Sort by lexical order of m:created
                     .sort((a, b) => a.thing['m:created'] > b.thing['m:created'] ? -1 : 1);
             } else {
@@ -243,9 +232,9 @@ app.get('/recall',
             }
 
             // Respond to request
-            if (cleaned)
+            if (found)
                 return res.status(200)
-                    .json(cleaned)
+                    .json(found)
                     .end();
             else
                 return res.status(404)
