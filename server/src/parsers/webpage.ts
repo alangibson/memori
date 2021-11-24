@@ -5,8 +5,9 @@ import cheerio from 'cheerio';
 // @ts-ignore because there are no types for this module
 import scrape from 'html-metadata';
 import { cidUrl } from "../index";
-import { ICommittable, IMemory } from "../models";
+import { ICommittable, IdRef, IMemory } from "../models";
 import { IParser, abstractFromString } from "./index";
+import { memory } from '@tensorflow/tfjs-core';
 
 // Raw json-ld / schema.org object found in the wild
 interface IRawSchemaOrg {
@@ -89,13 +90,14 @@ function makeIdUrl(schema: IRawSchemaOrg, microdata: IMicrodata): URL {
             // @ts-ignore because we catch errors
             return new URL(schema['@id']);
         } catch (e) {
-            try {
+            return cidUrl(Buffer.from(JSON.stringify(schema)));
+            // try {
                 // See if it is just a relative url
-                const c = new URL(microdata.general.canonical || 'throw an error');
-                return new URL(`${c.origin}/${schema['@id']}`);
-            } catch (e) {
-                return cidUrl(Buffer.from(JSON.stringify(schema)));
-            }
+                // const c = new URL(microdata.general.canonical || 'throw an error');
+                // return new URL(`${c.origin}/${schema['@id']}`);
+            // } catch (e) {
+            //     return cidUrl(Buffer.from(JSON.stringify(schema)));
+            // }
         }
     else
         return cidUrl(Buffer.from(JSON.stringify(schema)));
@@ -266,15 +268,25 @@ export class WebPageParser implements IParser {
             };
         }
 
+        // Add attachments to Memory
+        webPage._attachments = {
+            [webPage['@id']]: {
+                content_type: response.encodingFormat,
+                data: response.blob
+            }
+        };
+
         // TODO check html for rss/atom links. If found, add a MediaObject to schemas
         // TODO rss/atom feed MediaObject should be linked
 
-        // TODO turn these into @id refs, not actual objects
-        webPage['m:embedded'] = extractedSchemas;
+        // Dehydrate embedded things.
+        // Turn these into @id refs, not actual objects
+        webPage['m:embeddedIds'] = extractedSchemas.map((memory: IMemory): IdRef => (
+            { '@id': memory['@id'] }));
 
         // Add to all schemas an m:embeddedIn @id ref pointing to WebPage 
         for (const i in extractedSchemas) {
-            extractedSchemas[i]['m:embeddedIn'] = webPage['@id'];
+            extractedSchemas[i]['m:embeddedInId'] = { '@id': webPage['@id'] };
         }
 
         // For now just throw in all remaning schemas

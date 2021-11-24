@@ -21,12 +21,12 @@ export class PdfParser implements IParser {
         // TODO process any subelements
         // - embedded images    (Image#remember)
 
-        // TOOD if no name, 
+        const atId = response.url.toString();
         return [
             {
                 "@context": "https://schema.org",
                 "@type": "DigitalDocument",
-                "@id": response.url.toString(),
+                "@id": atId,
                 /** A description of the item. */
                 description: pdf.meta?.info?.Title || text.slice(0, 50),
                 /** An image of the item. This can be a {@link https://schema.org/URL URL} or a fully described {@link https://schema.org/ImageObject ImageObject}. */
@@ -53,7 +53,14 @@ export class PdfParser implements IParser {
                 // TODO "keywords"?: SchemaValue<DefinedTerm | Text | URL | IdReference, "keywords">;
                 /** A thumbnail image relevant to the Thing. */
                 // TODO "thumbnailUrl"?: SchemaValue<URL, "thumbnailUrl">;
-                'm:created': new Date().toISOString()
+                'm:created': new Date().toISOString(),
+                _attachments: {
+                    [atId]: {
+                        data: response.blob,
+                        content_type: response.encodingFormat,
+                        length: response.blob.length
+                    }
+                }    
             }
         ];
     }

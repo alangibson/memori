@@ -38,17 +38,25 @@ export class DocumentParser implements IParser {
             })
         });
 
+        const atId = cidUrl(response.blob).toString();
         return [{
             ...partialMemory,
             '@context': 'https://schema.org',
             '@type': 'TextDigitalDocument',
-            "@id": cidUrl(response.blob).toString(),
+            "@id": atId,
             encodingFormat: response.encodingFormat,
             abstract: abstractFromString(allText),
             name: nameFromString(allText),
             text: allText,
             url: response.url,
-            'm:created': new Date().toISOString()
+            'm:created': new Date().toISOString(),
+            _attachments: {
+                [atId]: {
+                    data: response.blob,
+                    content_type: response.encodingFormat,
+                    length: response.blob.length
+                }
+            }
         }];
     }
 

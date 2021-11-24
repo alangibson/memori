@@ -9,6 +9,10 @@ type CommandActionTypes = 'remember';
 // https://www.iana.org/assignments/media-types/text/uri-list
 type RememberableType = 'text/plain' | 'text/html' | 'text/uri-list' | 'audio/mp3';
 
+export interface IdRef {
+    '@id': string;
+}
+
 export interface IMemoryAttachment {
     content_type: string,
     data: Buffer
@@ -74,7 +78,7 @@ export interface IIndexable {
     video?: IIndexable;
     product?: IIndexable;
     softwareApplication?: IIndexable;
-    'm:embeddedIn'?: string; // just an @id string, not a reference object
+    'm:embeddedInId'?: IdRef;
 }
 
 // Bare minimum we need to dipslay something
@@ -94,6 +98,7 @@ interface IDisplayable {
 export interface IMemory extends IDisplayable, IIndexable {
     "@context": string;
     description?: string;
-    encodingFormat: string,
+    encodingFormat: string;
+    'm:embeddedIds'?: IdRef[];
     'm:embedded'?: IMemory[];
 }

@@ -14,17 +14,25 @@ export class AudioParser implements IParser {
 
     async parse(response: IRememberable): Promise<IMemory[]> {
         const text: string = await this.stt.recognize(response.blob);
+        const atId = response.url?.toString() || cidUrl(response.blob).toString();
         return [
             {
                 "@context": 'https://schema.org',
                 "@type": 'AudioObject',
-                "@id": response.url?.toString() || cidUrl(response.blob).toString(),
+                "@id": atId,
                 name: response.name || nameFromString(text),
                 url: response.url || cidUrl(response.blob),
                 text: text,
                 "m:created": new Date().toISOString(),
                 encodingFormat: response.encodingFormat,
-                abstract: abstractFromString(text)
+                abstract: abstractFromString(text),
+                _attachments: {
+                    [atId]: {
+                        data: response.blob,
+                        content_type: response.encodingFormat,
+                        length: response.blob.length
+                    }
+                }
             }
         ]
 

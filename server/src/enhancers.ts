@@ -16,25 +16,11 @@ interface ISchemaEnhancer {
     enhance(media: IIndexable | MediaObject): Promise<IMemory>;
 }
 
-// export class WebPageSchemaEnhancer implements ISchemaEnhancer {
-//     async enhance(media: IIndexable): Promise<Memory> {
-//         return {
-//             "@context": 'https://schema.org',
-//             "@type": "WebPage",
-//             "@id": id,
-//             url: response.location.toString(),
-//             name: microdata?.general?.title?.trim() || doc?.title?.trim(),
-//             abstract: abstractFromString(text),
-//             description: microdata?.general?.description?.trim() || abstractFromString(text),
-//             dateCreated: doc.lastModified,
-//             dateModified: doc.lastModified,
-//             datePublished: doc.lastModified,
-//             encodingFormat: response.mimeType,
-//             // This is what we index for full text search
-//             text: text,
-//         };
-//     }
-// }
+interface IDownloadResult {
+    blob: Buffer;
+    mimeType: string;
+    text: string;
+}
 
 export class Enhancer implements ISchemaEnhancer {
 
@@ -63,11 +49,45 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
         this.stt = new SpeachToText(modelPath);
     }
 
+    private async download(media: IIndexable, format: string = 'mp4'): Promise<IDownloadResult> {
+
+        // Figure out filename
+        const basename = [Buffer.from(media.url + media['@type']).toString('base64url')];
+        const filename = `${basename}.${format}`;
+
+        // Actually download the file
+        await youtubedl(media.url.toString(), {
+            callHome: false,
+            noCheckCertificate: true,
+            youtubeSkipDashManifest: true,
+            format: format,
+            output: filename
+        });
+
+        // Read downloaded file in from local drive
+        const mimeType: string | false = mime.lookup(filename);
+        if (!mimeType)
+            throw new Error(`Could not determine mime type for : ${filename}`);
+        const buffer: Buffer = await fs.readFile(filename);
+
+        // Run speach to text on video
+        console.log(`VideoSchemaEnhancer.enhance() : Performing speach-to-text on ${media.url}`);
+        const text: string = await this.stt.recognize(buffer);
+
+        // then delete it
+        await fs.unlink(filename);
+
+        return {
+            blob: buffer,
+            mimeType: mimeType,
+            text: text
+        };
+    }
+
     async enhance(media: IIndexable): Promise<IMemory> {
 
-        const [ basename, format ] = [ Buffer.from(media.url+media['@type'])
-            .toString('base64url'), 'mp4' ];
-        const filename = `${basename}.${format}`;
+        // TODO make this configurable
+        const format = 'mp4';
 
         console.log(`VideoSchemaEnhancer.enhance() : Getting video ${media.url}`);
 
@@ -81,28 +101,11 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
             format: format
         });
 
-        // Actually download the file
-        await youtubedl(media.url.toString(), {
-            callHome: false,
-            noCheckCertificate: true,
-            youtubeSkipDashManifest: true,
-            format: format,
-            output: filename
-        });
-        // console.warn(`VideoSchemaEnhancer.enhance() : Youtube-dl download is disabled!`);
-
-        // Read downloaded file in from local drive
-        const mimeType: string|false = mime.lookup(filename);
-        if (! mimeType)
-            throw new Error(`Could not determine mime type for : ${filename}`);
-        const buffer: Buffer = await fs.readFile(filename);
-
-        // Run speach to text on video
-        console.log(`VideoSchemaEnhancer.enhance() : Performing speach-to-text on ${media.url}`);
-        media.text = media.text + ' ' + await this.stt.recognize(buffer);
-
-        // then delete it
-        await fs.unlink(filename);
+        // Download and OCR video
+        // TODO turn on
+        const dl = await this.download(media, format);
+        media.text = media.text + ' ' + dl.text
+        const mimeType = dl.mimeType;
 
         // TODO site name is response.extractor
         // duration (seconds?)
@@ -125,11 +128,11 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
             abstract: response.description,
             author: response.uploader,
             dateCreated: response.upload_date,
-            dateModified: response.upload_date,
+            dateModified: response.upload_date, 
             _attachments: {
                 [id]: {
-                    content_type: mimeType,
-                    data: buffer
+                    content_type: dl.mimeType,
+                    data: dl.blob
                 }
             }
         };

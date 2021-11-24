@@ -68,6 +68,10 @@ export class Mind implements IPersistable {
         return new Mind(jailPath, space, name);
     }
 
+    public async get(id: URL, attachments: boolean, embedded: boolean): Promise<IMemory> {
+        return await this.index.getById(id, attachments, embedded);
+    }
+
     public async fetch(uri: URL): Promise<ICommittable> {
         // Dispatch to the appropriate fetcher
         let response: ICommittable;
@@ -101,36 +105,19 @@ export class Mind implements IPersistable {
         // otherwise we assume we already have a usable resource (ie. blob and mimeType is set)
 
         // Dispatch Response to parser
-        let things: IMemory[] = await this.parse(rememberable);
-
-        // Special case. WebPage is always position 0
-        const memory = things[0];
-
-        // TODO what about attachments to all the other things in array?
-
-        // Add attachments to primary memory
-        memory._attachments = {
-            [memory['@id']]: {
-                content_type: rememberable.encodingFormat,
-                data: rememberable.blob
-            }
-        };
+        let memories: IMemory[] = await this.parse(rememberable);
 
         // Enhance all schemas
-        // WARNING: @id of subthings can be changed by enhancers!
-        things = await Promise.all(
-            things.map(async (thing) => new Enhancer(await this.config.settings())
+        memories = await Promise.all(
+            memories.map(async (thing) => new Enhancer(await this.config.settings())
                 .enhance(thing)));
-
-        // TODO enhance all thing['m:embedded']
             
         // Write into Index
-        await this.index.index(things);
+        await this.index.index(memories);
 
-        // TODO flatten things in to a WebPage memory and return
-
-        // Return memory we stored
-        return memory;
+        // Return Memory we stored. The first item in the list is always the
+        // primary Memory.
+        return memories[0];
     }
 
     // Remember something.

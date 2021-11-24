@@ -315,6 +315,28 @@ async function main() {
             // then save
             await mind.save();
         });
+    program.command('reindex')
+        .argument('id', '@id to reindex')
+        .action(async (id: string) => {
+            const atId = new URL(id);
+
+            // Get Memory with _attachments
+            const memory: IMemory = await mind.get(atId, true, false);
+            
+            console.log(memory._attachments);
+
+            if (memory._attachments?.[id])
+                // Commit attachment blob to memory
+                await mind.commit({
+                    url: memory.url,
+                    name: memory.name,
+                    blob: memory._attachments[id].data,
+                    encodingFormat: memory._attachments[id].content_type,
+                });
+            else
+                console.info(`Couldn't find Memory with @id: ${id}`);
+
+        });
     program.command('crawl')
         .argument('root', 'Root path to start from')
         .action(async (root: string) => {
