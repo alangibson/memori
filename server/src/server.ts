@@ -384,10 +384,12 @@ if (process.env.NODE_ENV == 'development') {
 
 } else if (process.env.NODE_ENV == 'test') {
 
-    // Open ngrok tunnel
-    // const ngrokUrl = await ngrok.connect(argv.port);
-
-    const tunnel = await localtunnel({ port: argv.port });
+    console.info('Opening tunnel to this server');
+    const tunnel = await localtunnel({ 
+        port: argv.port,
+        subdomain: 'memori',
+        // host: 'https://my.memori.link'
+    });
 
     tunnel.on('close', () => {
         console.info(`Shutting down tunnel ${tunnel.url}`);
