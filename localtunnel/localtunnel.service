@@ -1,0 +1,17 @@
+[Unit]
+Description=Localtunnel Daemon
+After=syslog.target network.target
+
+[Service]
+# Change the user variable here according to your needs
+# User=username
+
+Type=simple
+
+ExecStart=lt --port 8000
+TimeoutStopSec=20
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Localtunnel reverse tunnel/proxy service
+
+[Service]
+PIDFile=/tmp/reverse_proxy-99.pid
+# User=ubuntu
+# Group=ubuntu
+Restart=always
+# Environment=DEBUG=*
+KillSignal=SIGQUIT
+WorkingDirectory=/var/www/html/server
+ExecStart=/usr/bin/node -r esm /var/www/html/server/bin/server --secure --domain my.memori.link --port 3000
+
+[Install]
+WantedBy=multi-user.target
