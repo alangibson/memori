@@ -1,8 +1,3 @@
-
-# Memori : Never Forget
-
-
-
 ## Installation
 
 ### Run local server on Linux

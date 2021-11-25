@@ -1,0 +1,18 @@
+{
+  "name": "memori",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alangibson/memori.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alangibson/memori/issues"
+  },
+  "homepage": "https://github.com/alangibson/memori#readme"
+}
