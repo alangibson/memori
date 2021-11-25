@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Memori : Never Forget</title>
+    <meta name="description" content="Memori : Never Forget">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+    <div id="menu">
+        <div>
+            <button>Log out</button>
+        </div>
+    </div>
+
+    <div id="alerts">
+        <div class="alert"></div>
+    </div>
+
+    <div id="tools">
+        <div id="search">
+            <input name="q" />
+            <button>Recall</button>
+        </div>
+        <div id="toolbar">
+            <div>
+                <button>Write Note</button>
+            </div>
+            <div>
+                <button>Take Photo</button>
+            </div>
+            <div>
+                <button>Record Audio</button>
+            </div>
+            <div>
+                <button>Record Video</button>
+            </div>
+            <div>
+                <button>Remember URL</button>
+            </div>
+            <div>
+                <button>Remember File</button>
+            </div>
+        </div>
+        <div id="tool">
+            <!-- TODO Selected tool opens here -->
+        </div>
+    </div>
+
+    <div id="results">
+
+        <div class="result">
+
+            <div>
+                <img class="thumbnail" />
+            </div>
+
+            <div class="content">
+                <div class="name">
+                    <a href="${thing.url}">
+                        ${thing.name}
+                    </a>
+                </div>
+                <div class="abstract">
+                    ${thing.name}
+                </div>
+                <div class="type">
+                    ${thing['@type']}
+                </div>
+                <div class="encodingFormat">
+                    ${thing.encodingFormat}
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="download">Download</button>
+                <button class="forget">Forget</button>
+                <!-- TODO GET /recall?@id=??? -->
+                <button class="details">More</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
