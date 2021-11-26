@@ -5,6 +5,7 @@ import { MediaObject } from "schema-dts";
 import { IIndexable, IMemory } from "./models";
 import { SpeachToText } from "./stt";
 import { ISettings } from "./configuration";
+import { abstractFromString } from "./parsers";
 
 // export type ProcessingResultType = [IMemory, IRememberable]
 
@@ -115,7 +116,8 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
 
         // We need to try to make @id different from the url of the parent WebPage
         // because most tube sites have id conflicts
-        const id: string = response.url || media['@id'];
+        // const id: string = response.url || media['@id'];
+        const id: string = media['@id'];
 
         const memory: IMemory = {
             ...media,
@@ -124,8 +126,8 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
             url: new URL(response.url),
             name: response.title,
             encodingFormat: mimeType,
-            description: response.description,
-            abstract: response.description,
+            // description: response.description,
+            abstract: response.description || abstractFromString(media.text),
             author: response.uploader,
             dateCreated: response.upload_date,
             dateModified: response.upload_date, 

@@ -26,6 +26,8 @@ npm run start:test
 ### Run local server on Windows
 
 ```
+Install git from https://git-scm.com/download/win
+
 Install node >= 16 from https://nodejs.org/en/download/
 If you don't have Python and Visual Studio Build Tools already installed,
   check "Automatically install the necessary tools"
@@ -33,9 +35,8 @@ If you don't have Python and Visual Studio Build Tools already installed,
 
 pip install vosk
 
-Download and unzip from https://github.com/alangibson/memori
-Extract as dir named memori
-cd to memori\server dir
+git clone https://github.com/alangibson/memori.git
+cd memori\server
 
 npm i --also=dev
 

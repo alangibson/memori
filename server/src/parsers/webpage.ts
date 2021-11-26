@@ -27,6 +27,10 @@ interface IRawSchemaOrg {
         contentUrl: string;
         encodingFormat: string;
     }[];
+    mainEntityOfPage?: {
+        '@type'?: string;
+        '@id'?: string;
+    };
 }
 
 export interface IMicrodata {
@@ -81,6 +85,16 @@ export function extractRssFeeds(doc: Document, base: URL) {
                 element.type == 'application/atom+xml'
             ))
         .map((element) => new URL(element.href, base));
+}
+
+function extractMainEntityOfPageUrlFromSchema(schema: IRawSchemaOrg): URL|undefined {
+    if (schema.mainEntityOfPage?.['@id'])
+        try {
+            return new URL(schema.mainEntityOfPage?.['@id']);
+        } catch (e) {
+            console.debug(`extractMainEntityOfPageUrlFromSchema() : Couldn't turn ${schema.mainEntityOfPage?.['@id']} into a URL`)
+        }
+    // else undefined
 }
 
 // Come up with some sort of @id URL
@@ -178,6 +192,15 @@ export class WebPageParser implements IParser {
     // Try to extract microdata and then build schemas
     async extract(microdata: IMicrodata): Promise<IMemory[]> {
         let schemas: IMemory[] = [];
+
+        // TODO pass origin into this function because we may not have microdata.general.canonical
+        // If possible, find a base for the URLs we will create
+        try {
+            var urlBase: string = new URL(microdata.general.canonical || '').origin;
+        } catch (e) {
+            var urlBase = '';
+        }
+
         try {
             schemas = schemas.concat(
                 microdata.schemaOrg.map((schema: IRawSchemaOrg): IMemory => {
@@ -185,13 +208,22 @@ export class WebPageParser implements IParser {
                     // Try to find a good url
                     let url: URL | undefined;
                     const urlString: string | undefined = schema.url || schema.embedUrl || schema['@id'];
+                    console.debug(`URL string is ${urlString}`);
                     if (urlString) {
-                        url = new URL(urlString);
+
+                        // FIXME catch invalid url error
+
+                        url = new URL(urlString, urlBase);
+
                     } else {
                         // We couldn't find an obvious url, so look in the alternate encodings
                         if (schema.encoding && schema.encoding?.length > 0) {
                             if (!url) {
-                                url = new URL(schema.encoding[0].contentUrl);
+
+                                // FIXME catch invalid url error. URLs can be relative!
+
+                                console.debug(`Content URL string is ${schema.encoding[0].contentUrl}`);
+                                url = new URL(schema.encoding[0].contentUrl, urlBase);
                                 schema.url = url.toString();
                             }
                         }
@@ -210,7 +242,7 @@ export class WebPageParser implements IParser {
                         '@context': schema['@context'] || 'https://schema.org',
                         '@type': schema['@type'] || 'Thing',
                         '@id': makeIdUrl(schema, microdata).toString(),
-                        url: url || makeIdUrl(schema, microdata),
+                        url: url || extractMainEntityOfPageUrlFromSchema(schema) || makeIdUrl(schema, microdata),
                         name: schema.name || schema.title || schema.headline || makeIdUrl(schema, microdata).toString(),
                         abstract: schema.abstract || abstractFromSchema(schema),
                         text: schema.text || textFromSchema(schema),
@@ -219,7 +251,9 @@ export class WebPageParser implements IParser {
                     }
                 })
             );
-        } catch (e) { } // Error: No microdata found in page
+        } catch (e) {
+            console.debug('No schemas extracted', e);
+        }
 
         return schemas;
     }
@@ -232,7 +266,12 @@ export class WebPageParser implements IParser {
 
         // All embedded schemas worth keeping
         const microdata: IMicrodata = await extractMicrodataFromHtml(html);
+
+        console.log('microdata', microdata);
+
         let extractedSchemas: IMemory[] = await this.extract(microdata);
+
+        console.log('extractedSchemas', extractedSchemas);
 
         // Parse interesting info from the web page we are parsing
         const doc: Document = documentFromHtml(html, response.encodingFormat);
@@ -268,6 +307,8 @@ export class WebPageParser implements IParser {
             };
         }
 
+        console.log('extractedSchemas again', extractedSchemas);
+
         // Add attachments to Memory
         webPage._attachments = {
             [webPage['@id']]: {
@@ -289,8 +330,12 @@ export class WebPageParser implements IParser {
             extractedSchemas[i]['m:embeddedInId'] = { '@id': webPage['@id'] };
         }
 
+        console.log('return', [webPage, ...extractedSchemas]);
+
         // For now just throw in all remaning schemas
         return [webPage, ...extractedSchemas];
     }
 
 }
+
+

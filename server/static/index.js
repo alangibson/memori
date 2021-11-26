@@ -114,7 +114,7 @@ function find(q, sort) {
                             </div>
                             <div>
                                 <a href="/recall/blob?@id=${result.thing['@id']}">
-                                    Download from memory
+                                    Download
                                 </a>
                                 <button onclick="forget('${result.thing['@id']}')">
                                     Forget
@@ -130,13 +130,24 @@ function find(q, sort) {
                                 result.thing['m:embedded']
                                     .map((schema) => `
                                     <div class="property name">
-                                        <a href="${schema.url}">
+                                        <a href="/recall?@id=${schema['@id']}">
                                             ${schema.name}
                                         </a>
+                                        <a href="${schema.url}">
+                                            [>]
+                                        </a>
+                                    </div>
+                                    <div class="property abstract">
+                                        ${schema.abstract}
                                     </div>
                                     <div>
                                         ${schema['@type']}
                                         &nbsp; ${schema.encodingFormat}
+                                    </div>
+                                    <div>
+                                        <a href="/recall/blob?@id=${schema['@id']}">
+                                            Download
+                                        </a>
                                     </div>
                                     `)
                             );

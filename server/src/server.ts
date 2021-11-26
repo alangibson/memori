@@ -203,6 +203,9 @@ app.get('/recall',
             await memory.load();
 
             const atId: URL = new URL(req.query['@id'].toString());
+
+            console.debug(`GET /recall : Recalling ${atId}`);
+
             const found: IRecalledMemory = await memory.recall(atId);
 
             if (found)
@@ -388,7 +391,7 @@ if (process.env.NODE_ENV == 'development') {
     const tunnel = await localtunnel({ 
         port: argv.port,
         subdomain: 'memori',
-        // host: 'https://my.memori.link'
+        host: 'https://my.memori.link'
     });
 
     tunnel.on('close', () => {

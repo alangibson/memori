@@ -195,6 +195,7 @@ export class Index implements IPersistable {
     async getById(id: URL, attachments: boolean = false, embedded: boolean = true): Promise<IMemory> {
 
         // Get from PouchDB
+        console.debug(`Index.search() : Getting document by id: ${id}`);
         const memory: IMemory = await this.db.get(id.toString(), {
             attachments: attachments,
             // We will always want attachments in binary form, not base64 encoded
@@ -204,12 +205,22 @@ export class Index implements IPersistable {
         // We will get url back as a string, so turn it into a URL object
         memory.url = new URL(memory.url.toString());
 
-        // Hydrate embedded things
-        if (embedded && memory['m:embeddedIds'])
+        // Hydrate embedded things        
+        if (embedded && memory['m:embeddedIds']) {
+            console.debug(`Index.search() : Hydrating ${memory['m:embeddedIds'].length} embedded documents in id: ${id}`);
             // getById() for each IdRef in memory['m:embeddedIds']
-            memory['m:embedded'] = await Promise.all(
-                memory['m:embeddedIds']?.map(async (idRef: IdRef) =>
-                    this.getById(new URL(idRef["@id"]))));
+            const x = await Promise.all(
+                memory['m:embeddedIds']?.map(async (idRef: IdRef): Promise<IMemory|undefined> => {
+                    try {
+                        return await this.getById(new URL(idRef["@id"]));
+                    } catch (e) {
+                        return undefined;
+                    }
+                })
+            );
+            // @ts-ignore because we can't have undefined here
+            memory['m:embedded'] = x.filter((memory) => memory != undefined);
+        }
 
         return memory;
     }
@@ -227,6 +238,7 @@ export class Index implements IPersistable {
             searchResults
                 // then Retrieve objects from Store
                 .map(async (id: URL): Promise<IRecalledMemory | undefined> => {
+
                     // It's possible we won't be able to get doc (ie it's not in the db)
                     // Build IRecalledMemory
                     try {
@@ -251,23 +263,6 @@ export class Index implements IPersistable {
                 && recalled?.thing != undefined
                 && recalled?.thing["m:embeddedInId"] == undefined)
 
-
-        // then deduplicate search results based on @id
-        // const seenIds: string[] = [];
-        // const filteredSearchResults: IRecalledMemory[] = recalled
-        //     .filter((result: IRecalledMemory): boolean => {
-        //         const recalled: IRecalledMemory = result;
-        //         if (seenIds.includes(recalled.thing['@id'])) {
-        //             console.debug(`Ejecting already seen @id ${recalled.thing['@id']} from search results`);
-        //             return false;
-        //         } else {
-        //             seenIds.push(recalled.thing['@id']);
-        //             return true;
-        //         }
-        //     })
-
-        // TODO sort results some way?
-
         return filteredRecalled;
     }
 
@@ -277,9 +272,8 @@ export class Index implements IPersistable {
     async all(limit: number = 10000, skip: number = 0,
         sort: string = 'm:created'): Promise<IRecalledMemory[]> {
 
-        // TODO do this with db.find(), not db.allDocs()
-
-        const found = await this.db.allDocs<IMemory>({
+        // Get only document ids
+        const found = await this.db.allDocs({
             include_docs: true,
             attachments: false,
             limit: limit,
@@ -287,25 +281,29 @@ export class Index implements IPersistable {
         });
 
         // Return array of IRecalledMemory
-        return found.rows
-            // Throw out undefined docs
-            .filter((doc) => doc.doc != undefined)
-            // Throw out internal configuration documents
-            .filter((doc) => !doc.id.startsWith('memori/'))
+        const memories: IRecalledMemory[] = await Promise.all(
+            found.rows
+                // Throw out undefined docs
+                .filter((row) => row.doc != undefined)
+                // Throw out internal configuration documents
+                .filter((row) => !row.id.startsWith('memori/'))
+                // Get full document and hydrate embedded things
+                .map(async (row): Promise<IMemory> => await this.getById(new URL(row.id)))
+                // Transform returned row into IMemory
+                .map(async (memory: Promise<IMemory>): Promise<IRecalledMemory> => {
+                    return {
+                        thing: await memory,
+                        recall: undefined,
+                    };
+                })
+        );
+
+        return memories
             // Only keep top-level memories
-            .filter((doc) => doc.doc?.["m:embeddedInId"] == undefined)
-            // Transform returned row into IMemory
-            .map((doc): IRecalledMemory => {
-                return {
-                    // @ts-ignore because we already filtered out undefined docs
-                    thing: doc.doc,
-                    recall: undefined,
-                };
-            })
+            .filter((doc: IRecalledMemory) => doc.thing["m:embeddedInId"] == undefined)
             // Sort by lexical order of m:created
             // @ts-ignore because name is a string variable
             .sort((a: IRecalledMemory, b: IRecalledMemory) => a.thing[sort] > b.thing[sort] ? -1 : 1);
-
     }
 
     async load() {
