@@ -144,24 +144,30 @@ app.post("/remember",
         const mind = await Config.getInstance().newMind(authorization);
         await mind.load();
 
+        let remembered: IMemory[] = [];
+
         // Remember uri lists
         if (req.body['uri-list'])
-            await mind.remember({
-                encodingFormat: 'text/uri-list',
-                blob: Buffer.from(req.body['uri-list'])
-            });
+            remembered.push(
+                await mind.remember({
+                    encodingFormat: 'text/uri-list',
+                    blob: Buffer.from(req.body['uri-list'])
+                })
+            );
 
         // Remember user notes
         if (req.body.name && req.body.mimetype && req.body.text)
-            await mind.remember({
-                name: req.body.name,
-                encodingFormat: req.body.mimetype,
-                blob: Buffer.from(req.body.text)
-            });
+            remembered.push(
+                await mind.remember({
+                    name: req.body.name,
+                    encodingFormat: req.body.mimetype,
+                    blob: Buffer.from(req.body.text)
+                })
+            );
 
-        // Handle each file we need to remember
+        // Remember each file we get
         console.debug(`POST /remember : Trying to remember ${req.files?.length} files`)
-        const remembered: IMemory[] = await Promise.all(
+        const rememberedFiles: IMemory[] = await Promise.all(
             (<any[]>req.files)?.map(async (file: any): Promise<IMemory> => {
 
                 console.debug(`POST /remember : Field name=${file.fieldname}, original name=${file.originalname}, mime type=${file.mimetype},encoding=${file.encoding}, size=${file.size}`);
@@ -176,16 +182,17 @@ app.post("/remember",
                 });
             })
         );
+        remembered = remembered.concat(rememberedFiles);
         console.log(`POST /remember : Remembered ${remembered.length} Memories`);
 
         // Save Mind satate
         await mind.save();
 
-        // Respond to requet
-        return res.status(201)
-            // TODO Return a Location header for each memory in remembered
-            .setHeader('Location', req.body.url || '/TODO')
-            .end();
+        // Respond to request with 201 Created
+        const r = res.status(201)
+        remembered.forEach(memory => 
+            r.setHeader('Location', `/recall?@id=${memory['@id']}`));
+        return r.end();
     });
 
 // Search and query endpoint

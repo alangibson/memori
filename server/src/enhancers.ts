@@ -9,7 +9,9 @@ import { abstractFromString } from "./parsers";
 
 // export type ProcessingResultType = [IMemory, IRememberable]
 
-// Does additional processing of Schema.org schemas
+// Does additional processing of Schema.org schemas.
+// An enhacement is any processing that is likely to take longer than a user
+// would like to wait for a single web request to finish (OCR, STT, transcoding, etc.).
 interface ISchemaEnhancer {
     // Do things like OCR, speech recognition, download video
     // Also can produce video, audio, or image blobs.

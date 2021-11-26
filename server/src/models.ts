@@ -102,3 +102,10 @@ export interface IMemory extends IDisplayable, IIndexable {
     'm:embeddedIds'?: IdRef[];
     'm:embedded'?: IMemory[];
 }
+
+// Returned by Mind to indicate something has been Remembered, either partially or fully
+export interface IRemembered {
+    memory: IMemory;
+    // False if further processing will take place (OCR, SST, etc.)
+    done: boolean;
+}

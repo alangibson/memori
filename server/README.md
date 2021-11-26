@@ -45,6 +45,7 @@ Download and extract http://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zi
 
 set PATH=%cd%\node_modules\ffmpeg-static;%PATH%
 set NODE_ENV=test
+set NODE_OPTIONS=--max_old_space_size=4096
 npm start
 ```
 
