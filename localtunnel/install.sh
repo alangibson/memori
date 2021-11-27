@@ -16,7 +16,8 @@ sudo systemctl status nginx
 snap install certbot --classic
 
 certbot --server https://acme-v02.api.letsencrypt.org/directory \
-  -d *.my.memori.link --manual --preferred-challenges dns-01 certonly
+  -d *.my.memori.link -d my.memori.link \
+  --manual --preferred-challenges dns-01 certonly
 
 cp site.conf /etc/nginx/sites-available/my.memori.link
 ln -s  /etc/nginx/sites-available/my.memori.link  /etc/nginx/sites-enabled/my.memori.link
@@ -29,3 +30,16 @@ systemctl daemon-reload
 systemctl enable localtunnel-server
 systemctl start localtunnel-server
 systemctl status localtunnel-server
+
+crontab -e
+0 12 * * * /snap/bin/certbot renew
+
+
+# I using Vue CLI serve
+# Add to vue.config.js
+module.exports = {
+    devServer: {
+        // disableHostCheck: true
+        public: 'memori.my.memori.link'
+    }
+};
