@@ -12,7 +12,6 @@ import { Commands } from "./commands";
 import { FileFetcher, HttpFetcher } from "./fetcher";
 import { Parser } from './parsers';
 import { Config } from "./configuration";
-import { EnhancementWorker } from './enhancers/worker';
 
 export interface IPersistable {
     save(): void;
@@ -53,14 +52,12 @@ export class Mind implements IPersistable {
     public commands: Commands;
     private index: Index;
     private config: Config;
-    private worker: EnhancementWorker;
 
     constructor(jailPath: string, space: string, name: string) {
         this.path = `${jailPath}/${space}/${name}`;
         this.commands = new Commands(`${this.path}/commands`);
         this.index = new Index(`${this.path}/index`);
         this.config = Config.getInstance();
-        this.worker = new EnhancementWorker(this.index);
     }
 
     static async create(jailPath: string, space: string, name: string): Promise<Mind> {
@@ -113,11 +110,11 @@ export class Mind implements IPersistable {
         // TODO Don't await enhancements. Instead, return IRemembered with done=false if 
         // enancement will take place.
         // Enhance all schemas
-        // const enhancements: Promise<IMemory>[] = memories
-        //     .map(async (thing) => new Enhancer(await this.config.settings())
-        //         .enhance(thing))
+        const enhancements: Promise<IMemory>[] = memories
+            .map(async (thing) => new Enhancer(await this.config.settings())
+                .enhance(thing))
         // Just do await
-        // memories = await Promise.all(enhancements);
+        memories = await Promise.all(enhancements);
         // Promises
         // enhancements.forEach((promise: Promise<IMemory>) => {
         //     promise.then((memory: IMemory) => {
@@ -126,7 +123,7 @@ export class Mind implements IPersistable {
         // });
 
         console.debug(`Mind.commit() : Queueing ${memories.length} memories for enhancement`);
-        this.worker.enhance(memories);
+        // this.worker.enhance(memories);
             
         // Write into Index
         await this.index.index(memories);

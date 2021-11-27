@@ -6,12 +6,11 @@ import pouchdbUpsert from 'pouchdb-upsert';
 import flexSearch, { IndexSearchResult } from 'flexsearch';
 import { IPersistable, IRecalledMemory, contentHashUrl } from "./index";
 import { IdRef, IIndexable, IMemory, IRememberable } from "./models";
-import pouchdbAdapterMemory from 'pouchdb-adapter-memory';
-import { filter } from "cheerio/lib/api/traversing";
+// import pouchdbAdapterMemory from 'pouchdb-adapter-memory';
 
 PouchDB.default.plugin(pouchdbFind);
 PouchDB.default.plugin(pouchdbUpsert);
-PouchDB.default.plugin(pouchdbAdapterMemory);
+// PouchDB.default.plugin(pouchdbAdapterMemory);
 
 // PouchDB.default.plugin(pouchdbQuickSearch);
 
@@ -109,7 +108,9 @@ export class Index implements IPersistable {
     constructor(path: string) {
         this.path = path;
         // Start with an in-memory PouchDB
-        this.db = new PouchDB.default(`${this.path}/db`, { adapter: 'memory' });
+        this.db = new PouchDB.default(`${this.path}/db`, 
+        // { adapter: 'memory' }
+        );
         this.idx = new FlexsearchSearch(this.db);
     }
 

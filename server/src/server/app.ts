@@ -1,29 +1,28 @@
-import { promises as fs } from 'fs';
 import { v4 as uuid } from 'uuid';
 // import ngrok from 'ngrok';
 import localtunnel from 'localtunnel';
 import { URL } from 'url';
 import express from 'express';
 import multer from 'multer';
-import { IRecalledMemory, Mind } from './index';
+import { IRecalledMemory, Mind } from '../index';
 import passport from 'passport';
 import { Strategy as BearerStrategy } from 'passport-http-bearer';
 import CookieStrategy from 'passport-cookie';
 import { Command, Option } from 'commander';
 import cookieParser from 'cookie-parser';
-import https from 'https';
-import { IMemory, IRememberable } from './models'
-import { AccessRule, Config } from './configuration';
+import { IMemory, IRememberable } from '../models'
+import { AccessRule, Config } from '../configuration';
+import { startCluster } from './cluster';
 
 
 // Parse command line args
-const program = new Command()
-    .addOption(new Option('-p, --port <port>', 'TCP port to listen on').default(4321))
-    .option('-b, --bind <ip4>', 'IP address to bind to', '0.0.0.0')
-    .option('-d, --data <dir>', 'Directory to store data in', process.cwd())
-    .option('-s, --security <file>', 'Security config file', `${process.cwd()}/security.json`)
-    .parse(process.argv);
-const argv = program.opts();
+// const program = new Command()
+//     .addOption(new Option('-p, --port <port>', 'TCP port to listen on').default(4321))
+//     .option('-b, --bind <ip4>', 'IP address to bind to', '0.0.0.0')
+//     .option('-d, --data <dir>', 'Directory to store data in', process.cwd())
+//     .option('-s, --security <file>', 'Security config file', `${process.cwd()}/security.json`)
+//     .parse(process.argv);
+// const argv = program.opts();
 
 
 // Build Express server and middleware
@@ -381,39 +380,4 @@ app.get('/logout',
     }
 );
 
-if (process.env.NODE_ENV == 'development') {
-
-    // Run a local https server
-    https.createServer({
-        key: await fs.readFile(`${process.cwd()}/dev.key`),
-        cert: await fs.readFile(`${process.cwd()}/dev.cert`)
-    }, app)
-        .listen(argv.port, argv.bind, () => {
-            console.info(`Server started with TLS at https://${argv.bind}:${argv.port}`);
-        });
-
-} else if (process.env.NODE_ENV == 'test') {
-
-    console.info('Opening tunnel to this server');
-    const tunnel = await localtunnel({ 
-        port: argv.port,
-        subdomain: 'memori',
-        host: 'https://my.memori.link'
-    });
-
-    tunnel.on('close', () => {
-        console.info(`Shutting down tunnel ${tunnel.url}`);
-    });
-
-    // Start the express server
-    app.listen(argv.port, argv.bind, () => {
-        console.info(`Server started at http://${argv.bind}:${argv.port}`);
-        console.info(`Connect via secure tunnel at ${tunnel.url}`);
-    });
-
-} else {
-    // Start the express server
-    app.listen(argv.port, argv.bind, () => {
-        console.info(`Server started at http://${argv.bind}:${argv.port}`);
-    });
-}
+export default app;

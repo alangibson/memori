@@ -14,11 +14,14 @@ class VoskWritableStream extends Writable {
         this.text = '';
     }
 
-    _write(chunk: any, encoding: BufferEncoding, next: (error?: Error | null) => void) {
-        if (this.recognizer.acceptWaveform(chunk)) {
-            this.text += this.recognizer.result().text;
-        }
-        next();
+    _write(chunk: any, encoding: BufferEncoding, next: (error?: Error | null) => void): void {
+        new Promise<void>((resolve, reject) => {
+            if (this.recognizer.acceptWaveform(chunk)) {
+                this.text += this.recognizer.result().text;
+            }
+            resolve();
+            next();
+        });
     }
 
     _final(next: (error?: Error | null) => void) {
@@ -41,12 +44,14 @@ export class SpeachToText {
         // Convert to wav format required by Vosk
         const model = new vosk.Model(this.modelPath);
         const recognizer = new vosk.Recognizer({ model: model, sampleRate: 16000 });
-        const voskStream = new VoskWritableStream(recognizer);
+
+        const voskWritable = new VoskWritableStream(recognizer);
+        // const voskWritable = new VoskWritableStream(model);
 
         // With ffmpeg-stream
         const converter = new Converter();
-        const converterInput = converter.createInputStream({});
-        const converterOutput = converter.createOutputStream({
+        const converterWritable: Writable = converter.createInputStream({});
+        const converterReadable: Readable = converter.createOutputStream({
             loglevel: '0',
             ar: '16000',
             ac: '1',
@@ -54,16 +59,16 @@ export class SpeachToText {
             bufsize: '4000'
         });
         Readable.from(blob, { 'highWaterMark': 4096 })
-            .pipe(converterInput);
-        converterOutput
-            .pipe(voskStream);
+            .pipe(converterWritable);
+        converterReadable
+            .pipe(voskWritable);
         await converter.run();
 
         // Free resources
         recognizer.free();
         model.free();
 
-        return voskStream.text;
+        return voskWritable.text;
     }
 
 }
