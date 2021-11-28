@@ -24,6 +24,7 @@ export interface ISettings {
     ocrLanguage: string;
     voskModel: string;
     defaultMindName: string;
+    couchDbUrl: string;
 
 }
 
@@ -38,14 +39,14 @@ export class Config {
         this._security = security || { tokens: {} };
     }
 
-    static getInstance() {
+    static getInstance(): Config {
         if (this.instance)
             return this.instance;
         this.instance = new Config();
         return this.instance;
     }
 
-    private async load() {
+    async load(): Promise<Config> {
 
         // TODO create default settings.json if not exists
 
@@ -61,6 +62,8 @@ export class Config {
         } catch (e) {
             console.warn(`No security.json found. Creating default empty structure.`);
         }
+
+        return this;
     }
 
     private async ensureLoaded() {
@@ -88,7 +91,7 @@ export class Config {
         await this.ensureLoaded();
         // TODO get from config?
         const jailPath: string = `${process.cwd()}/store`;
-        return Mind.create(jailPath, auth.space, auth.name);
+        return Mind.create(await this.settings(), jailPath, auth.space, auth.name);
 
     }
 

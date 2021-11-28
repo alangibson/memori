@@ -1,120 +1,24 @@
-import { promises as fs } from "fs";
-import MiniSearch, { Options, SearchResult } from 'minisearch';
-import * as PouchDB from 'pouchdb';
-import pouchdbFind from 'pouchdb-find';
-import pouchdbUpsert from 'pouchdb-upsert';
-import flexSearch, { IndexSearchResult } from 'flexsearch';
-import { IPersistable, IRecalledMemory, contentHashUrl } from "./index";
-import { IdRef, IIndexable, IMemory, IRememberable } from "./models";
-// import pouchdbAdapterMemory from 'pouchdb-adapter-memory';
-
-PouchDB.default.plugin(pouchdbFind);
-PouchDB.default.plugin(pouchdbUpsert);
-// PouchDB.default.plugin(pouchdbAdapterMemory);
-
-// PouchDB.default.plugin(pouchdbQuickSearch);
-
-interface ISearchIndex {
-
-    // Full text search for q, return array of @id as URL
-    search(q: string): Promise<URL[]>;
-
-    add(id: URL, text: string): Promise<void>;
-
-    update(id: URL, text: string): Promise<void>;
-
-    remove(id: URL): Promise<void>;
-}
-
-class FlexsearchSearch implements ISearchIndex, IPersistable {
-
-    db: PouchDB.Database;
-    index: flexSearch.Index;
-
-    constructor(db: PouchDB.Database) {
-        this.db = db;
-        this.index = new flexSearch.Index({
-            tokenize: "forward"
-        });
-    }
-
-    async add(id: URL, text: string) {
-        await this.index.addAsync(id.toString(), text);
-    }
-
-    async update(id: URL, text: string) {
-        await this.index.updateAsync(id.toString(), text);
-    }
-
-    async search(q: string): Promise<URL[]> {
-        const results: IndexSearchResult = await this.index.searchAsync(q);
-        return results.map((id: flexSearch.Id) => new URL(id.toString()))
-    }
-
-    async remove(id: URL) {
-        try {
-            await this.index.removeAsync(id.toString());
-        } catch (e) {
-            console.warn(`FlexsearchSearch.remove() : Failed to remove @id ${id} because ${e}`);
-        }
-    }
-
-    async save() {
-        console.debug('FlexsearchSearch.save()');
-
-        const d: { [key: string]: string } = {};
-        this.index
-            .export(async (key: string | number, data: string) => {
-                const k = key.toString().split('.').pop() || '';
-                d[k] = data;
-            });
-
-        // We have to sleep because of function async() in serialize.js
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Store to PouchDB
-        for (const [key, data] of Object.entries(d)) {
-            await this.db.upsert(`memori/flexsearch/${key}`, () => ({
-                _id: `memori/flexsearch/${key}`,
-                data: data
-            }));
-        }
-    }
-
-    async load() {
-        try {
-            const keys = ['reg', 'cfg', 'map', 'ctx'];
-            for (const key of keys) {
-                // @ts-ignore
-                this.index.import(key, (await this.db.get(`memori/flexsearch/${key}`)).data);
-            }
-        } catch (e) {
-            console.debug(`FlexsearchSearch.load() : No existing index: ${e}`);
-        }
-    }
-
-    async clear() {
-        throw new Error("FlexsearchSearch.clear() : Method not implemented.");
-    }
-
-}
+import { IPersistable, IRecalledMemory } from "../index";
+import { IdRef, IMemory } from "../models";
+import { CouchDbDatabase } from "../indexer/couchdb";
+import { FlexsearchSearch } from "../indexer/flexsearch";
+import { IDatabase } from "../indexer/index";
+import { ISettings } from "../configuration";
 
 export class Index implements IPersistable {
 
-    private path: string;
-    private db: PouchDB.Database;
+    private mindName: string;
     private idx: FlexsearchSearch;
+    private db: IDatabase;
 
-    constructor(path: string) {
-        this.path = path;
-        // Start with an in-memory PouchDB
-        this.db = new PouchDB.default(`${this.path}/db`, 
-        // { adapter: 'memory' }
-        );
+    constructor(name: string, settings: ISettings) {
+        this.mindName = name;
+        // TODO include space name in database
+        this.db = new CouchDbDatabase(name, settings);
         this.idx = new FlexsearchSearch(this.db);
     }
 
-    async store(storables: IIndexable[]) {
+    async store(storables: IMemory[]) {
 
         // Note: "doc must be a 'pure JSON object', i.e. a collection of 
         // name/value pairs. If you try to store non-JSON data (for instance 
@@ -130,33 +34,20 @@ export class Index implements IPersistable {
 
         // Iterate over IStorables and save each one
         await Promise.all(
-            storables.map(async (storable: IIndexable) => {
+            storables.map(async (storable: IMemory) => {
 
                 console.debug(`Index.store() : Upserting ${storable["@type"]} ${storable['@id']}`);
 
                 try {
-
-                    await this.db.upsert(storable["@id"], (existing) => {
-
-                        // if (existing)
-                        //     console.debug(`Index.store() : Found existing stored thing ${existing._id}`, existing);
-
-                        // @ts-ignore becasue were just making sure that there is no _rev
-                        // delete storable._rev;
-
-                        const combined = { ...existing, ...storable };
-
-                        // delete storable._attachments;
-                        // console.log('storable', JSON.stringify(storable, null, 2));
-
-                        return combined;
+                    await this.db.upsert(storable['@id'], (existing): IMemory => {
+                        return { ...existing, ...storable };
                     });
-
+                    
                     // Update in search index
                     await this.idx.update(new URL(storable["@id"]), storable.text);
-
-                } catch (e) {
-                    console.error('Index.store()', e);
+                
+                } catch (e: any) {
+                    console.error('Index.store() : Error storing memory: ', e);
                 }
             })
         );
@@ -165,29 +56,12 @@ export class Index implements IPersistable {
 
     // Remove from minisearch and PouchDB
     async remove(id: URL) {
-
-        console.debug(`Index.remove() : Removing id ${id}`);
-
-        // TODO We can get into an inconsistent state where search queries faile
-        // due to missing id in db if we don't also remove from search index.
-
-        const doc = await this.db.get(id.toString());
-
-        console.debug(`Index.remove() : Removing id ${id} from full text search index`);
-        await this.idx.remove(id);
-
         console.debug(`Index.remove() : Removing id ${id} from database`);
-        await this.db.remove(doc);
+        await this.db.remove(id.toString());
     }
 
-    async index(things: IIndexable[]) {
-
+    async index(things: IMemory[]) {
         console.debug(`Index.index() : Indexing ${things.length} things`);
-
-        // Index directory should always exist
-        await fs.mkdir(this.path, { recursive: true });
-
-        // Store and index for full text search
         await this.store(things);
     }
 
@@ -197,7 +71,7 @@ export class Index implements IPersistable {
 
         // Get from PouchDB
         console.debug(`Index.search() : Getting document by id: ${id}`);
-        const memory: IMemory = await this.db.get(id.toString(), {
+        const memory: IMemory|undefined = await this.db.get(id.toString(), {
             attachments: attachments,
             // We will always want attachments in binary form, not base64 encoded
             binary: true
@@ -274,7 +148,7 @@ export class Index implements IPersistable {
         sort: string = 'm:created'): Promise<IRecalledMemory[]> {
 
         // Get only document ids
-        const found = await this.db.allDocs({
+        const found = await this.db.all({
             include_docs: true,
             attachments: false,
             limit: limit,
@@ -283,17 +157,18 @@ export class Index implements IPersistable {
 
         // Return array of IRecalledMemory
         const memories: IRecalledMemory[] = await Promise.all(
-            found.rows
-                // Throw out undefined docs
-                .filter((row) => row.doc != undefined)
-                // Throw out internal configuration documents
-                .filter((row) => !row.id.startsWith('memori/'))
+            // found.rows
+            found
+                // // Throw out undefined docs
+                // .filter((row) => row.doc != undefined)
+                // // Throw out internal configuration documents
+                // .filter((row) => !row.id.startsWith('memori/'))
                 // Get full document and hydrate embedded things
-                .map(async (row): Promise<IMemory> => await this.getById(new URL(row.id)))
+                // .map(async (row): Promise<IMemory> => await this.getById(new URL(row.id)))
                 // Transform returned row into IMemory
-                .map(async (memory: Promise<IMemory>): Promise<IRecalledMemory> => {
+                .map((memory: IMemory): IRecalledMemory => {
                     return {
-                        thing: await memory,
+                        thing: memory,
                         recall: undefined,
                     };
                 })
@@ -309,27 +184,29 @@ export class Index implements IPersistable {
 
     async load() {
         // Directory needs to always be there
-        await fs.mkdir(`${this.path}/db`, { recursive: true });
+        // await fs.mkdir(`${this.path}/db`, { recursive: true });
+        await this.db.load();
         // Load up PouchDB file system backed db        
-        this.db = new PouchDB.default(`${this.path}/db`);
+        // this.db = new PouchDB.default(`${this.path}/db`);
         // Reconstruct search index
-        this.idx = new FlexsearchSearch(this.db);
+        // this.idx = new FlexsearchSearch(this.db);
         await this.idx.load();
-
     }
 
     async save() {
         // Directory needs to always be there
-        await fs.mkdir(`${this.path}/db`, { recursive: true });
+        // await fs.mkdir(`${this.path}/db`, { recursive: true });
+        await this.db.save();
         await this.idx.save();
     }
 
     // Immediately clear all data from Index
     // Leaves databases in a state ready for immediate se
     async clear() {
-        await this.db.destroy();
-        this.db = new PouchDB.default(`${this.path}/db`);
-        this.idx = new FlexsearchSearch(this.db);
+        // await this.db.destroy();
+        // this.db = new PouchDB.default(`${this.path}/db`);
+        // this.idx = new FlexsearchSearch(this.db);
+        await this.db.clear();
     }
 
 }

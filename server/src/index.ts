@@ -7,11 +7,11 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import { base32 } from "multiformats/bases/base32";
 import { ICommittable, IMemory, IRememberable } from './models'
 import { Enhancer } from "./enhancers";
-import { Index } from "./indexer";
+import { Index } from "./indexer/indexer";
 import { Commands } from "./commands";
 import { FileFetcher, HttpFetcher } from "./fetcher";
 import { Parser } from './parsers';
-import { Config } from "./configuration";
+import { ISettings } from "./configuration";
 
 export interface IPersistable {
     save(): void;
@@ -51,21 +51,18 @@ export class Mind implements IPersistable {
     private path: string;
     public commands: Commands;
     private index: Index;
-    private config: Config;
+    private settings: ISettings;
 
-    constructor(jailPath: string, space: string, name: string) {
+    constructor(settings: ISettings, jailPath: string, space: string, name: string) {
+        this.settings = settings;
         this.path = `${jailPath}/${space}/${name}`;
         this.commands = new Commands(`${this.path}/commands`);
-        this.index = new Index(`${this.path}/index`);
-        this.config = Config.getInstance();
+        // CouchDB db names much begin with a lowercase letter
+        this.index = new Index(`space/${space}/db/${name}`, settings);
     }
 
-    static async create(jailPath: string, space: string, name: string): Promise<Mind> {
-        // TODO remove this duplicate path building
-        // const path: string = `${jailPath}/${space}/${name}`;
-        // const configPath: string = `${path}/config`;
-        // await mkdir(configPath);
-        return new Mind(jailPath, space, name);
+    static async create(settings: ISettings, jailPath: string, space: string, name: string): Promise<Mind> {
+        return new Mind(settings, jailPath, space, name);
     }
 
     public async get(id: URL, attachments: boolean, embedded: boolean): Promise<IMemory> {
@@ -86,7 +83,7 @@ export class Mind implements IPersistable {
     }
 
     public async parse(response: ICommittable): Promise<IMemory[]> {
-        return await new Parser(await this.config.settings())
+        return await new Parser(this.settings)
             .parse(response);
     }
 
@@ -111,7 +108,7 @@ export class Mind implements IPersistable {
         // enancement will take place.
         // Enhance all schemas
         const enhancements: Promise<IMemory>[] = memories
-            .map(async (thing) => new Enhancer(await this.config.settings())
+            .map(async (thing) => new Enhancer(this.settings)
                 .enhance(thing))
         // Just do await
         memories = await Promise.all(enhancements);

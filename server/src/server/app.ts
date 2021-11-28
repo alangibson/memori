@@ -350,7 +350,7 @@ app.post("/mind", async (req, res) => {
     const token: string = await config.allow(spaceName, mindName, 'all');
     await config.save();
 
-    await Mind.create(storageRoot, spaceName, mindName);
+    await Mind.create(await config.settings(), storageRoot, spaceName, mindName);
 
     // Log user in and redirect back to home page
     res.status(200)

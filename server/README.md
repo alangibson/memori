@@ -3,6 +3,15 @@
 ### Run local server on Linux
 
 ```
+# Install CouchDB
+sudo apt update && sudo apt install -y curl apt-transport-https gnupg
+curl https://couchdb.apache.org/repo/keys.asc | gpg --dearmor | sudo tee /usr/share/keyrings/couchdb-archive-keyring.gpg >/dev/null 2>&1
+source /etc/os-release
+echo "deb [signed-by=/usr/share/keyrings/couchdb-archive-keyring.gpg] https://apache.jfrog.io/artifactory/couchdb-deb/ ${UBUNTU_CODENAME|VERSION_CODENAME} main" \
+    | sudo tee /etc/apt/sources.list.d/couchdb.list >/dev/null
+sudo apt update
+sudo apt install -y couchdb
+
 # Install Tesseract
 sudo apt install tesseract-ocr
 
@@ -26,6 +35,8 @@ npm run start:test
 ### Run local server on Windows
 
 ```
+Install CouchDB from https://couchdb.apache.org/#download
+
 Install git from https://git-scm.com/download/win
 
 Install node >= 16 from https://nodejs.org/en/download/
