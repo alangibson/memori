@@ -267,11 +267,11 @@ export class WebPageParser implements IParser {
         // All embedded schemas worth keeping
         const microdata: IMicrodata = await extractMicrodataFromHtml(html);
 
-        console.log('microdata', microdata);
+        // console.log('microdata', microdata);
 
         let extractedSchemas: IMemory[] = await this.extract(microdata);
 
-        console.log('extractedSchemas', extractedSchemas);
+        // console.log('extractedSchemas', extractedSchemas);
 
         // Parse interesting info from the web page we are parsing
         const doc: Document = documentFromHtml(html, response.encodingFormat);
@@ -307,7 +307,7 @@ export class WebPageParser implements IParser {
             };
         }
 
-        console.log('extractedSchemas again', extractedSchemas);
+        // console.log('extractedSchemas again', extractedSchemas);
 
         // Add attachments to Memory
         webPage._attachments = {
@@ -330,7 +330,7 @@ export class WebPageParser implements IParser {
             extractedSchemas[i]['m:embeddedInId'] = { '@id': webPage['@id'] };
         }
 
-        console.log('return', [webPage, ...extractedSchemas]);
+        // console.log('return', [webPage, ...extractedSchemas]);
 
         // For now just throw in all remaning schemas
         return [webPage, ...extractedSchemas];

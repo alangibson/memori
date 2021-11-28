@@ -110,20 +110,31 @@ export class Mind implements IPersistable {
         const enhancements: Promise<IMemory>[] = memories
             .map(async (thing) => new Enhancer(this.settings)
                 .enhance(thing))
-        // Just do await
-        memories = await Promise.all(enhancements);
-        // Promises
+
+        // Just do await on all enhancement
+        // memories = await Promise.all(enhancements);
+
+        // Save each enhancer output as it finishes
         // enhancements.forEach((promise: Promise<IMemory>) => {
         //     promise.then((memory: IMemory) => {
-        //         this.index.index([memory]);
+        //         this.index.index([memory])
+        //             .then(() => this.index.save());
         //     })
         // });
+
+        // Wait for all enhancers to finsih then index all
+        // in a single batch
+        Promise.all(enhancements)
+            .then((memories: IMemory[]) => {
+                this.index.index(memories)
+                    .then(() => this.index.save());
+            });
 
         console.debug(`Mind.commit() : Queueing ${memories.length} memories for enhancement`);
         // this.worker.enhance(memories);
             
         // Write into Index
-        await this.index.index(memories);
+        // await this.index.index(memories);
 
         // Return Memory we stored. The first item in the list is always the
         // primary Memory.
@@ -157,7 +168,7 @@ export class Mind implements IPersistable {
 
     // Get all the Memories
     async all(): Promise<IRecalledMemory[]> {
-        return this.index.all();
+        return await this.index.all();
     }
 
     // Recall a single memory by @id

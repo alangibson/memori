@@ -39,13 +39,19 @@ export class Index implements IPersistable {
                 console.debug(`Index.store() : Upserting ${storable["@type"]} ${storable['@id']}`);
 
                 try {
-                    await this.db.upsert(storable['@id'], (existing): IMemory => {
+                    await this.db.upsert(storable['@id'], (existing: {}): IMemory => {
+
+                        // @ts-ignore
+                        console.log(`Previous ${existing._rev}, new : ${storable._rev}`,
+                            Object.keys(storable).includes('_rev'));
+                        console.log(`Attachments in ${storable['@id']}`, storable._attachments);
+
                         return { ...existing, ...storable };
                     });
-                    
+
                     // Update in search index
                     await this.idx.update(new URL(storable["@id"]), storable.text);
-                
+
                 } catch (e: any) {
                     console.error('Index.store() : Error storing memory: ', e);
                 }
@@ -69,23 +75,27 @@ export class Index implements IPersistable {
     //   embedded: replace IdRefs in m:embedded with real objects from db
     async getById(id: URL, attachments: boolean = false, embedded: boolean = true): Promise<IMemory> {
 
-        // Get from PouchDB
-        console.debug(`Index.search() : Getting document by id: ${id}`);
-        const memory: IMemory|undefined = await this.db.get(id.toString(), {
+        // Get from db
+        console.debug(`Index.getById() : Getting document by id: ${id}`);
+        const memory: IMemory | undefined = await this.db.get(id.toString(), {
             attachments: attachments,
             // We will always want attachments in binary form, not base64 encoded
             binary: true
         });
+
+        console.debug(`Index.getById() : Got document from db: ${memory}`);
 
         // We will get url back as a string, so turn it into a URL object
         memory.url = new URL(memory.url.toString());
 
         // Hydrate embedded things        
         if (embedded && memory['m:embeddedIds']) {
-            console.debug(`Index.search() : Hydrating ${memory['m:embeddedIds'].length} embedded documents in id: ${id}`);
+            console.debug(`Index.getById() : Hydrating ${memory['m:embeddedIds'].length} embedded documents in id: ${id}`);
+
             // getById() for each IdRef in memory['m:embeddedIds']
+            // TODO use this.hydrateIdRefs()
             const x = await Promise.all(
-                memory['m:embeddedIds']?.map(async (idRef: IdRef): Promise<IMemory|undefined> => {
+                memory['m:embeddedIds']?.map(async (idRef: IdRef): Promise<IMemory | undefined> => {
                     try {
                         return await this.getById(new URL(idRef["@id"]));
                     } catch (e) {
@@ -93,6 +103,7 @@ export class Index implements IPersistable {
                     }
                 })
             );
+
             // @ts-ignore because we can't have undefined here
             memory['m:embedded'] = x.filter((memory) => memory != undefined);
         }
@@ -141,6 +152,15 @@ export class Index implements IPersistable {
         return filteredRecalled;
     }
 
+    private async hydrateIdRefs(idRefs: IdRef[] | undefined): Promise<IMemory[]> {
+        console.debug(`hydrateIdRefs() : Hydrating ${idRefs?.length} id refs`);
+        if (idRefs == undefined || idRefs.length <= 0)
+            return [];
+        return await Promise.all(idRefs
+            .map((idRef: IdRef) =>
+                this.getById(new URL(idRef['@id']))));
+    }
+
     // Dumps a bunch of docuemnts
     // Parameters
     //   sort: key to sort on
@@ -157,18 +177,23 @@ export class Index implements IPersistable {
 
         // Return array of IRecalledMemory
         const memories: IRecalledMemory[] = await Promise.all(
-            // found.rows
             found
                 // // Throw out undefined docs
                 // .filter((row) => row.doc != undefined)
                 // // Throw out internal configuration documents
                 // .filter((row) => !row.id.startsWith('memori/'))
                 // Get full document and hydrate embedded things
-                // .map(async (row): Promise<IMemory> => await this.getById(new URL(row.id)))
+                // .map(async (memory: IMemory): Promise<IMemory> => await this.getById(new URL(memory['@id'])))
+                // Hydrate embedded id refs
+                .map(async (memory: IMemory): Promise<IMemory> => {
+                    memory['m:embedded'] = await this.hydrateIdRefs(memory['m:embeddedIds']);
+                    return memory;
+                })
+                // .map(async (memory: IMemory): Promise<IMemory> => { return memory })
                 // Transform returned row into IMemory
-                .map((memory: IMemory): IRecalledMemory => {
+                .map(async (memory: Promise<IMemory>): Promise<IRecalledMemory> => {
                     return {
-                        thing: memory,
+                        thing: await memory,
                         recall: undefined,
                     };
                 })
@@ -180,6 +205,7 @@ export class Index implements IPersistable {
             // Sort by lexical order of m:created
             // @ts-ignore because name is a string variable
             .sort((a: IRecalledMemory, b: IRecalledMemory) => a.thing[sort] > b.thing[sort] ? -1 : 1);
+
     }
 
     async load() {

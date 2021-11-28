@@ -1,5 +1,6 @@
 import flexSearch, { IndexSearchResult } from 'flexsearch';
 import { IPersistable } from 'src';
+import { IMemory } from 'src/models';
 import { IDatabase } from './index';
 
 export interface ISearchIndex {
@@ -50,32 +51,53 @@ export class FlexsearchSearch implements ISearchIndex, IPersistable {
     async save() {
         console.debug('FlexsearchSearch.save()');
 
+        // Export index from Flexsearch
         const d: { [key: string]: string } = {};
         this.index
             .export(async (key: string | number, data: string) => {
                 const k = key.toString().split('.').pop() || '';
                 d[k] = data;
             });
-
         // We have to sleep because of function async() in serialize.js
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // TODO turn on
-        // Store to PouchDB
-        // for (const [key, data] of Object.entries(d)) {
-        //     await this.db.upsert(`memori/flexsearch/${key}`, () => ({
-        //         _id: `memori/flexsearch/${key}`,
-        //         data: data
-        //     }));
-        // }
+        // Store to db as a Memory
+        for (const [key, data] of Object.entries(d)) {
+            await this.db.upsert(`memori/flexsearch/${key}`, (existing) => ({
+                ...existing,
+                "@id": `memori/flexsearch/${key}`,
+                "@context": 'https://schema.org',
+                "@type": 'Dataset',
+                name: `memori/flexsearch/${key}`,
+                "m:created": new Date().toISOString(),
+                abstract: `memori/flexsearch/${key}`,
+                encodingFormat: 'application/json',
+                text: `memori/flexsearch/${key}`,
+                url: new URL(`file:///memori/flexsearch/${key}`),
+                _attachments: {
+                    [`memori/flexsearch/${key}`]: {
+                        content_type: 'application/json',
+                        data: Buffer.from(data, 'utf8'),
+                    }
+                }
+            }));
+        }
     }
 
     async load() {
         try {
             const keys = ['reg', 'cfg', 'map', 'ctx'];
             for (const key of keys) {
-                // @ts-ignore
-                this.index.import(key, (await this.db.get(`memori/flexsearch/${key}`)).data);
+                const id = `memori/flexsearch/${key}`;
+                const index: IMemory = await this.db.get(id, {
+                    attachments: true,
+                    binary: true
+                });
+                const data: Buffer|undefined = index._attachments?.[index['@id']].data;
+                if (data != undefined)
+                    this.index.import(key, data.toString('utf8'));
+                else
+                    console.debug(`FlexsearchSearch.load() : Couldn't retrieve index part ${id}`);
             }
         } catch (e) {
             console.debug(`FlexsearchSearch.load() : No existing index: ${e}`);

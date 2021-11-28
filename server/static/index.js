@@ -124,7 +124,6 @@ function find(q, sort) {
 
                         // Add subschema html
                         let subschemas = [];
-
                         if (result.thing['m:embedded'])
                             subschemas = subschemas.concat(
                                 result.thing['m:embedded']

@@ -204,15 +204,15 @@ app.get('/recall',
         const authorization: AccessRule = <AccessRule>req.user;
 
         if (req.query['@id']) {
+            console.debug(`GET /recall : Getting memory by id ${req.query['@id']}`);
 
             const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
 
             const atId: URL = new URL(req.query['@id'].toString());
-
-            console.debug(`GET /recall : Recalling ${atId}`);
-
             const found: IRecalledMemory = await memory.recall(atId);
+
+            console.debug(`GET /recall : Found memory ${memory}`);
 
             if (found)
                 return res.status(200)
@@ -222,7 +222,8 @@ app.get('/recall',
                 return res.status(404)
                     .end();
 
-        } else if (req.query.q) {
+        } else if (req.query.q && req.query.q.toString() != '') {
+            console.debug(`GET /recall : Searching for ${req.query.q}`);
 
             const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
@@ -250,11 +251,13 @@ app.get('/recall',
                     .end();
 
         } else {
+            console.debug(`GET /recall : Listing all memories`);
 
             const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
 
             const found: IRecalledMemory[] = await memory.all();
+            console.debug(`GET /recall : Found ${found.length} memories`);
 
             // Respond to request
             return res.status(200)

@@ -64,7 +64,8 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
             noCheckCertificate: true,
             youtubeSkipDashManifest: true,
             format: format,
-            output: filename
+            output: filename,
+            verbose: true
         });
 
         // Read downloaded file in from local drive
