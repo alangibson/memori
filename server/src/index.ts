@@ -24,14 +24,14 @@ export interface IQuery {
     q: string;
 }
 
-export function cidUrl(b : Buffer): URL {
+export function cidUrl(b: Buffer): URL {
     const encoded = crypto.createHash('sha256')
         .update(b)
         .digest('hex');
     return new URL(`cid:${encoded}`);
 }
 
-export async function contentHashUrl(b : Buffer) : Promise<URL> {
+export async function contentHashUrl(b: Buffer): Promise<URL> {
     const cid = CID.create(1, 0x00,
         await sha256.digest(new Uint8Array(b)));
     return new URL('cid:' + cid.toV1().toString(base32.encoder));
@@ -104,8 +104,6 @@ export class Mind implements IPersistable {
         // Dispatch Response to parser
         let memories: IMemory[] = await this.parse(rememberable);
 
-        // TODO Don't await enhancements. Instead, return IRemembered with done=false if 
-        // enancement will take place.
         // Enhance all schemas
         const enhancements: Promise<IMemory>[] = memories
             .map(async (thing) => new Enhancer(this.settings)
@@ -114,25 +112,19 @@ export class Mind implements IPersistable {
         // Just do await on all enhancement
         // memories = await Promise.all(enhancements);
 
-        // Save each enhancer output as it finishes
-        // enhancements.forEach((promise: Promise<IMemory>) => {
-        //     promise.then((memory: IMemory) => {
-        //         this.index.index([memory])
-        //             .then(() => this.index.save());
-        //     })
-        // });
-
+        // TODO since we wait for all to finish, it could take unnecessarily long
+        // for things like Youtube with videos to download to show up
+        
         // Wait for all enhancers to finsih then index all
         // in a single batch
         Promise.all(enhancements)
             .then((memories: IMemory[]) => {
                 this.index.index(memories)
+                    // Make sure search index gets written out
                     .then(() => this.index.save());
-            });
+            })
 
-        console.debug(`Mind.commit() : Queueing ${memories.length} memories for enhancement`);
-        // this.worker.enhance(memories);
-            
+        // No longer necessary because everything passes through enhancement!
         // Write into Index
         // await this.index.index(memories);
 
@@ -147,7 +139,7 @@ export class Mind implements IPersistable {
 
         // Upgrade type since since we will always have a location
         rememberable.url = rememberable.url || await contentHashUrl(rememberable.blob);
-        const commitable: ICommittable = <ICommittable> rememberable;
+        const commitable: ICommittable = <ICommittable>rememberable;
 
         // Archive the user input
         await this.commands.log({ action: 'remember', ...commitable });

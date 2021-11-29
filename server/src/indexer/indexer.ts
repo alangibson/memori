@@ -13,13 +13,19 @@ export class Index implements IPersistable {
 
     constructor(name: string, settings: ISettings) {
         this.mindName = name;
-        // TODO include space name in database
         this.db = new CouchDbDatabase(name, settings);
         this.idx = new FlexsearchSearch(this.db);
     }
 
-    async store(storables: IMemory[]) {
+    // Remove from minisearch and PouchDB
+    async remove(id: URL) {
+        console.debug(`Index.remove() : Removing id ${id} from database`);
+        await this.db.remove(id.toString());
+    }
 
+    async index(things: IMemory[]) {
+        console.debug(`Index.index() : Indexing ${things.length} things`);
+        
         // Note: "doc must be a 'pure JSON object', i.e. a collection of 
         // name/value pairs. If you try to store non-JSON data (for instance 
         // Date objects) you may see inconsistent results."
@@ -34,7 +40,7 @@ export class Index implements IPersistable {
 
         // Iterate over IStorables and save each one
         await Promise.all(
-            storables.map(async (storable: IMemory) => {
+            things.map(async (storable: IMemory) => {
 
                 console.debug(`Index.store() : Upserting ${storable["@type"]} ${storable['@id']}`);
 
@@ -58,17 +64,6 @@ export class Index implements IPersistable {
             })
         );
 
-    }
-
-    // Remove from minisearch and PouchDB
-    async remove(id: URL) {
-        console.debug(`Index.remove() : Removing id ${id} from database`);
-        await this.db.remove(id.toString());
-    }
-
-    async index(things: IMemory[]) {
-        console.debug(`Index.index() : Indexing ${things.length} things`);
-        await this.store(things);
     }
 
     // Get full stored resource by @id
@@ -209,19 +204,11 @@ export class Index implements IPersistable {
     }
 
     async load() {
-        // Directory needs to always be there
-        // await fs.mkdir(`${this.path}/db`, { recursive: true });
         await this.db.load();
-        // Load up PouchDB file system backed db        
-        // this.db = new PouchDB.default(`${this.path}/db`);
-        // Reconstruct search index
-        // this.idx = new FlexsearchSearch(this.db);
         await this.idx.load();
     }
 
     async save() {
-        // Directory needs to always be there
-        // await fs.mkdir(`${this.path}/db`, { recursive: true });
         await this.db.save();
         await this.idx.save();
     }
@@ -229,9 +216,6 @@ export class Index implements IPersistable {
     // Immediately clear all data from Index
     // Leaves databases in a state ready for immediate se
     async clear() {
-        // await this.db.destroy();
-        // this.db = new PouchDB.default(`${this.path}/db`);
-        // this.idx = new FlexsearchSearch(this.db);
         await this.db.clear();
     }
 

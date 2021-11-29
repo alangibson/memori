@@ -70,4 +70,4 @@ export async function startCluster(app: Express, workers: number = totalCPUs) {
     }    
 } 
 
-await startCluster(app, 1);
+await startCluster(app);
