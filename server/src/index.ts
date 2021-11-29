@@ -104,10 +104,13 @@ export class Mind implements IPersistable {
         // Dispatch Response to parser
         let memories: IMemory[] = await this.parse(rememberable);
 
+        // Write into Index immediately
+        await this.index.index(memories);
+
         // Enhance all schemas
         const enhancements: Promise<IMemory>[] = memories
-            .map(async (thing) => new Enhancer(this.settings)
-                .enhance(thing))
+            .map((memory: IMemory) => new Enhancer(this.settings)
+                .enhance(memory))
 
         // Just do await on all enhancement
         // memories = await Promise.all(enhancements);
@@ -123,10 +126,6 @@ export class Mind implements IPersistable {
                     // Make sure search index gets written out
                     .then(() => this.index.save());
             })
-
-        // No longer necessary because everything passes through enhancement!
-        // Write into Index
-        // await this.index.index(memories);
 
         // Return Memory we stored. The first item in the list is always the
         // primary Memory.

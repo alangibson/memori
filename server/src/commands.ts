@@ -21,21 +21,9 @@ export class Commands {
         // Write to dated file
         const filename: string = `${this.path}/${new Date().getTime()}-${(Math.random() + 1).toString(36).substring(2)}.json`;
         await fs.appendFile(filename, JSON.stringify(command));
-
-        // Append to file
-        // await fs.appendFile(`${this.path}/commands.jsonl`,
-        //     JSON.stringify(command) + '\n');
     }
 
     async replay(callback: (command: ICommand) => Promise<void>) {
-
-        // const lineReader = readline.createInterface({
-        //     input: fsSync.createReadStream(`${this.path}/commands.jsonl`)
-        // });
-        // for await (const line of lineReader) {
-        //     await callback(JSON.parse(line));
-        // }
-
         for await (const filename of await fs.readdir(this.path)) {
             console.log(`Replaying command ${filename}`);
             await callback(

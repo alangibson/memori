@@ -38,8 +38,12 @@ export class CouchDbDatabase implements IDatabase, IPersistable {
 
     async get(id: string, options?: DatabaseGetOptions): Promise<IMemory> {
 
-        console.debug(`CouchDbDatabase.get() : Getting from db: ${id}`);
+        // attachments=true means data will be included as base64 encoded string.
+        // _attachments is always included no matter what.
+        const attachments = options?.attachments;
+        delete options?.attachments;
 
+        console.debug(`CouchDbDatabase.get() : Getting from db: ${id}`);
         const memory: IMemory | undefined = await this.db?.get(id, options);
 
         console.debug(`CouchDbDatabase.get() : Got memory from db: ${memory}`);
@@ -47,17 +51,25 @@ export class CouchDbDatabase implements IDatabase, IPersistable {
         if (memory == undefined)
             throw new Error(`Memory ${id} not found`);
 
-        if (memory._attachments && options?.binary) {
+        // Get blob for every attachment
+        if (memory._attachments && attachments && options?.binary) {
+
             console.debug(`CouchDbDatabase.get() : Transforming attachments to binary: ${memory._attachments}`);
-            for (const [key, attachment] of Object.entries(memory._attachments)) {
-                if (memory._attachments[key].data) {
-                    console.debug(`CouchDbDatabase.get() : Transforming attachment ${key} to binary. Length is ${memory._attachments[key].data.length}`);
+            
+            for (const [key, attachmentMeta] of Object.entries(memory._attachments)) {
+
+                // Get attachment like this. Otherwise we get it as a huge string
+                console.debug(`CouchDbDatabase.get() : Attachment of Memory ${id} is ${key}`);
+                const blob: Buffer|undefined = await this.db?.attachment.get(id, key);
+
+                if (blob) {
+                    console.debug(`CouchDbDatabase.get() : Attachment ${key} length is ${blob.length}`);
                     // Base64 decode attachments like PouchDB client does
-                    memory._attachments[key].data = // memory._attachments[key].data
-                        Buffer.from(atob(attachment.data.toString('binary')), 'binary');
+                    memory._attachments[key].data = blob;            
                 } else {
                     console.debug(`CouchDbDatabase.get() : No data found for ${key}. Did you set attachments=true?`);
                 }
+
             }
 
         }

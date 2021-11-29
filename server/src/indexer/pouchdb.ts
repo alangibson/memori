@@ -5,8 +5,8 @@ import pouchdbUpsert from 'pouchdb-upsert';
 import flexSearch, { IndexSearchResult } from 'flexsearch';
 import { IDatabase } from './index';
 import { IPersistable } from '..';
-import { IMemory } from 'src/models';
-import { ISettings } from 'src/configuration';
+import { IMemory } from '../models';
+import { ISettings } from '../configuration';
 // import pouchdbAdapterMemory from 'pouchdb-adapter-memory';
 
 PouchDB.default.plugin(pouchdbFind);

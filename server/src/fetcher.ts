@@ -27,7 +27,7 @@ export class FileFetcher implements IFetcher {
             encodingFormat: mimeType,
             blob: blob,
             url: uri
-        };
+        }
     }
 
 }
@@ -56,7 +56,8 @@ export class HttpFetcher implements IFetcher {
             encodingFormat: mimeType,
             blob: await response.buffer(),
             url: uri
-        };
+        }
+
     }
 
 }

@@ -1,6 +1,6 @@
 import flexSearch, { IndexSearchResult } from 'flexsearch';
-import { IPersistable } from 'src';
-import { IMemory } from 'src/models';
+import { IPersistable } from '../index';
+import { IMemory } from '../models';
 import { IDatabase } from './index';
 
 export interface ISearchIndex {

@@ -1,23 +1,10 @@
 import { promises as fs } from "fs";
 import mime from 'mime-types';
 import youtubedl, { YtResponse } from 'youtube-dl-exec';
-import { MediaObject } from "schema-dts";
-import { IIndexable, IMemory } from "./models";
-import { SpeachToText } from "./stt";
-import { ISettings } from "./configuration";
-import { abstractFromString } from "./parsers";
-
-// export type ProcessingResultType = [IMemory, IRememberable]
-
-// Does additional processing of Schema.org schemas.
-// An enhacement is any processing that is likely to take longer than a user
-// would like to wait for a single web request to finish (OCR, STT, transcoding, etc.).
-interface ISchemaEnhancer {
-    // Do things like OCR, speech recognition, download video
-    // Also can produce video, audio, or image blobs.
-    // Either url, contentUrl or embedUrl must be set.
-    enhance(media: IIndexable | MediaObject): Promise<IMemory>;
-}
+import { IIndexable, IMemory } from "../models";
+import { SpeachToText } from "../stt";
+import { abstractFromString } from "../parsers";
+import { IEnhancer } from "./index";
 
 interface IDownloadResult {
     blob: Buffer;
@@ -25,26 +12,7 @@ interface IDownloadResult {
     text: string;
 }
 
-export class Enhancer implements ISchemaEnhancer {
-
-    private settings: ISettings;
-
-    constructor(settings: ISettings) {
-        this.settings = settings;
-    }
-
-    async enhance(media: IIndexable): Promise<IMemory> {
-        if (media["@type"] == 'VideoObject')
-            return new VideoSchemaEnhancer(`${process.cwd()}/etc/${this.settings.voskModel}`)
-                .enhance(media);
-        else
-            // TODO is this cast safe?
-            return <IMemory>media;
-    }
-
-}
-
-export class VideoSchemaEnhancer implements ISchemaEnhancer {
+export class VideoEnhancer implements IEnhancer {
 
     private stt: SpeachToText;
 
@@ -88,7 +56,7 @@ export class VideoSchemaEnhancer implements ISchemaEnhancer {
         };
     }
 
-    async enhance(media: IIndexable): Promise<IMemory> {
+    async enhance(media: IMemory): Promise<IMemory> {
 
         // TODO make this configurable
         const format = 'mp4';

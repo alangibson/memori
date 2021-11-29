@@ -1,4 +1,4 @@
-import { ISettings } from "src/configuration";
+import { ISettings } from "../configuration";
 import { ICommittable, IMemory } from "../models";
 import { AudioParser } from "./audio";
 import { BinaryParser } from './binary';
@@ -43,12 +43,12 @@ export class Parser implements IParser {
             // Send all other application types through the generic text extractor
             return await new DocumentParser().parse(response);
         } else if (response.encodingFormat.startsWith('audio/')) {
-            return await new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
+            return await new AudioParser()
                 .parse(response);
         } else if (response.encodingFormat.startsWith('video/')) {
             // TODO create a VideoParser
             // FIXME temporary hack because audio/webm file is uploade as video/webm
-            return await new AudioParser(`${process.cwd()}/etc/${this.settings.voskModel}`)
+            return await new AudioParser()
                     .parse(response);
         } else if (response.encodingFormat.startsWith('text/plain') || 
                    response.encodingFormat.startsWith('text/markdown')) {
