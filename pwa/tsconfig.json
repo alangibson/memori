@@ -1,40 +1,32 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "es2020",
+    "module": "ES2020",
     "strict": true,
-    "jsx": "preserve",
-    "importHelpers": true,
     "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "baseUrl": ".",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    // "importHelpers": true,
+    // "lib": [ "es2015", "dom" ],
     "types": [
-      "webpack-env"
+      "node",
+      "svelte"
     ],
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": true,
+    //   "skipLibCheck": true,
+    // "esModuleInterop": true,
+    // "allowSyntheticDefaultImports": true,
   },
+  "extends": "@tsconfig/svelte/tsconfig.json",
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "src/**/*",
+    "src/node_modules"
   ],
   "exclude": [
-    "node_modules"
-  ]
+    "node_modules/*",
+    "__sapper__/*",
+    "public/*"
+  ],
 }
