@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Memori",
     "version": "0.1",
-    "description": "Your External Memory",
+    "description": "Never Forget",
     "icons": {
         "48": "icons/memori-48.png",
         "96": "icons/memori-96.png"

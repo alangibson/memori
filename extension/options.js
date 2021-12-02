@@ -4,9 +4,8 @@ if (typeof browser === "undefined") {
     var browser = chrome;
 }
 
-function saveOptions(e) {
-    e.preventDefault();
-
+function saveOptions(event) {
+    
     // Promise only works on Firefox
     // browser.storage.sync.set({
     //     mindUrl: document.querySelector("#mind-url").value,
@@ -18,9 +17,12 @@ function saveOptions(e) {
     browser.storage.sync.set({
             memoriUrl: document.querySelector("#memori-url").value,
             authToken: document.querySelector("#auth-token").value
-        }, 
-        (x) => console.debug(x));
+        });
 
+    // Close options popup
+    event.currentTarget.parentNode.removeChild(event.currentTarget);
+
+    event.preventDefault();
 }
 
 function restoreOptions() {
@@ -39,8 +41,6 @@ function restoreOptions() {
         (result) => {
             document.querySelector("#memori-url").value = result.memoriUrl || "";
             document.querySelector("#auth-token").value = result.authToken || "";
-            console.debug(result);
-
         });
 }
 
