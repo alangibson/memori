@@ -6,6 +6,7 @@ import { terser } from 'rollup-plugin-terser';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
+import postcss from 'rollup-plugin-postcss';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -39,6 +40,7 @@ export default {
 		file: 'public/build/bundle.js'
 	},
 	plugins: [
+
 		svelte({
 			preprocess: sveltePreprocess({ sourceMap: !production }),
 			compilerOptions: {
@@ -49,15 +51,18 @@ export default {
 			preprocess: sveltePreprocess({
 				scss: {
 					prependData: `@import 'src/styles/variables.scss';`,
+					// Options for compiling Svelte tag: <style lang="scss">
+					includePaths: ["./node_modules"],
 				},
 			}
 			),
 			emitCss: true,
 		}),
+
 		// Typescript support
-		typescript(
-			{ sourceMap: !production }
-		),
+		// typescript(
+		// 	{ sourceMap: !production }
+		// ),
 		// ts({
 		// 	typescript
 		// }),
@@ -65,6 +70,21 @@ export default {
 		// we'll extract any component CSS out into
 		// a separate file - better for performance
 		css({ output: 'bundle.css' }),
+
+		postcss({
+			extensions: ['.scss', '.sass'],
+			extract: false,
+			minimize: true,
+			use: [
+				['sass', {
+					includePaths: [
+						'./src/theme',
+						'./node_modules',
+						//'./static/sass'
+					]
+				}]
+			]
+		}),
 
 		// If you have external dependencies installed from
 		// npm, you'll most likely need these plugins. In
@@ -75,7 +95,9 @@ export default {
 			browser: true,
 			dedupe: ['svelte']
 		}),
+
 		commonjs(),
+
 		typescript({
 			sourceMap: !production,
 			inlineSources: !production

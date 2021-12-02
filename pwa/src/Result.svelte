@@ -1,36 +1,74 @@
 <script>
+    // import Paper, { Content as Card } from "@smui/paper";
+    import Card, { Content, PrimaryAction } from "@smui/card";
+    import LayoutGrid, { Cell } from "@smui/layout-grid";
+    import IconButton from "@smui/icon-button";
+    import Button, { Group, Label, Icon } from "@smui/button";
+    import List, { Item, Separator, Text } from "@smui/list";
+
     let memory = {
-        url: 'https://example.com',
-        name: 'Memory Name',
-        encodingFormat: 'text/plain'
+        url: "https://example.com",
+        name: "Memory Name",
+        abstract:
+            "blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah ...",
+        encodingFormat: "text/plain",
+        "@type": "TextObject",
     };
 </script>
 
-<div class="card my-5">
-    <div class="columns">
-        <div class="column">
+<Card variant="outlined">
+    <LayoutGrid>
+        <Cell spanDevices={{ desktop: 3, tablet: 2}}>
             <figure class="image is-128x128">
                 <img
                     class="thumbnail"
                     src="https://bulma.io/images/placeholders/128x128.png"
+                    alt="Thumbnail placeholder"
                 />
             </figure>
-        </div>
-        <div class="column">
-            <div class="name">
+        </Cell>
+
+        <Cell spanDevices={{ desktop: 6, tablet: 5 }}>
+            <Content>
+            <h4>
                 <a href="${memory.url}">{memory.name}</a>
-            </div>
-            <div class="abstract">{memory.name}</div>
-            <div class="type">{memory["@type"]}</div>
-            <div class="encodingFormat">{memory.encodingFormat}</div>
-        </div>
-        <div class="column is-one-fifth">
-            <div class="actions">
-                <button class="button is-fullwidth download">Download</button>
-                <button class="button is-fullwidth forget">Forget</button>
-                <!-- TODO GET /recall?@id=??? -->
-                <button class="button is-fullwidth details">More</button>
-            </div>
-        </div>
-    </div>
-</div>
+            </h4>
+            <div>{memory.abstract}</div>
+            <h5>{memory["@type"]} / {memory.encodingFormat}</h5>
+        </Content>
+        </Cell>
+
+        <Cell spanDevices={{ desktop: 3}}>
+            <Group class="memory-actions">
+                <Button variant="outlined">
+                    <Icon class="material-icons">download</Icon>
+                    <Label>Download</Label>
+                </Button>
+                <Button variant="outlined">
+                    <Icon class="material-icons">delete</Icon>
+                    <Label>Forget</Label>
+                </Button>
+                <Button variant="outlined">
+                    <Icon class="material-icons">read_more</Icon>
+                    <Label>View</Label>
+                </Button>
+            </Group>
+        </Cell>
+    </LayoutGrid>
+</Card>
+
+<style>
+    /* Stack buttons vertically on large screens */
+    @media only screen and (min-width: 840px) {
+        :global(.memory-actions) {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+    /* Icons only on small screens */
+    @media only screen and (max-width: 400px) {
+        :global(.memory-actions) :global(.mdc-button__label) {
+            display: none;
+        }
+    }
+</style>

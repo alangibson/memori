@@ -1,21 +1,26 @@
+<script>
+    import Button from "@smui/button";
+    import IconButton from "@smui/icon-button";
+    import TopAppBar, {
+        Row,
+        Section,
+        Title,
+        AutoAdjust,
+    } from "@smui/top-app-bar";
+</script>
 
-<div>
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-            <a class="navbar-item" href="https://memori.link">
-                <img src="/icons/icon-192.png" alt="Memori : Never Forget"/>
-                <i>Never Forget</i>
-            </a>
-        </div>
-        <div class="navbar-menu">
-            <div class="navbar-start" />
-        </div>
-        <div class="navbar-end">
-            <div class="navbar-item">
-                <div class="buttons">
-                    <button class="button is-light">Log Out</button>
-                </div>
-            </div>
-        </div>
-    </nav>
-</div>
+<TopAppBar variant="static">
+    <Row>
+        <Section>
+            Memori<Title>Never Forget</Title>
+        </Section>
+        <Section align="end" toolbar>
+            <IconButton class="material-icons" aria="Log Out">
+                logout
+            </IconButton>
+            <!-- <IconButton class="material-icons">
+                apps
+            </IconButton> -->
+        </Section>
+    </Row>
+</TopAppBar>
