@@ -1,14 +1,24 @@
-<script>
+<script lang="ts">
     import { Content } from '@smui/card';
     import Button from "@smui/button";
     import Textfield from "@smui/textfield";
     import Icon from "@smui/textfield/icon";
     import HelperText from "@smui/textfield/helper-text";
     import Banner, { Label } from "@smui/banner";
+    import { Auth } from './store';
+
+    let isAuthorized: boolean = true;
+
+    Auth.subscribe((authorized: string) => {
+        console.log(`User is authorized? ${authorized}`);
+        isAuthorized = ( authorized == 'yes' );
+        console.log(`isAuthorized? ${isAuthorized}`);
+    });
 
     let token = "";
 </script>
 
+{#if ! isAuthorized}
 <Banner open mobileStacked>
     <Content slot="label">
         <p>
@@ -36,3 +46,4 @@
         <Label>Close</Label>
     </Button>
 </Banner>
+{/if}

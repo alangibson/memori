@@ -6,8 +6,7 @@
     import Navbar from "./Navbar.svelte";
     import LogIn from "./LogIn.svelte";
     import Notices from "./Notices.svelte";
-    import Tools from "./Tools.svelte";
-    import Results from "./Results.svelte";
+    import Search from "./Search.svelte";
 
     let surface: MenuSurfaceComponentDev;
     let clicked = "";
@@ -16,8 +15,8 @@
 <Navbar />
 <LogIn />
 <Notices />
-<Tools />
-<Results />
+
+<Search/>
 
 <Fab
     style="position: fixed; right: 1em; bottom: 1em;"

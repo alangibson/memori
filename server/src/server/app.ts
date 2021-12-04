@@ -1,6 +1,4 @@
 import { v4 as uuid } from 'uuid';
-// import ngrok from 'ngrok';
-import localtunnel from 'localtunnel';
 import { URL } from 'url';
 import express from 'express';
 import multer from 'multer';
@@ -8,36 +6,28 @@ import { IRecalledMemory, Mind } from '../index';
 import passport from 'passport';
 import { Strategy as BearerStrategy } from 'passport-http-bearer';
 import CookieStrategy from 'passport-cookie';
-import { Command, Option } from 'commander';
 import cookieParser from 'cookie-parser';
 import { IMemory, IRememberable } from '../models'
 import { AccessRule, Config } from '../configuration';
-import { startCluster } from './cluster';
-
-
-// Parse command line args
-// const program = new Command()
-//     .addOption(new Option('-p, --port <port>', 'TCP port to listen on').default(4321))
-//     .option('-b, --bind <ip4>', 'IP address to bind to', '0.0.0.0')
-//     .option('-d, --data <dir>', 'Directory to store data in', process.cwd())
-//     .option('-s, --security <file>', 'Security config file', `${process.cwd()}/security.json`)
-//     .parse(process.argv);
-// const argv = program.opts();
-
 
 // Build Express server and middleware
 const app = express();
+
 app.use(cookieParser());
+
 // Make multipart/form-request available in request.body
 // Accepts all files that comes over the wire. 
 // An array of files will be stored in req.files.
 // https://github.com/expressjs/multer#any
 // TODO: WARNING Never add multer as a global middleware since a malicious user could upload files to a route that you didn't anticipate
 app.use(multer().any());
+
 // Serve static files from dir ./static on / (not /static !)
 app.use(express.static('static'));
+
 // Support Authorization header
 app.use(passport.initialize());
+
 // http://www.passportjs.org/packages/passport-http-bearer/
 passport.use(new BearerStrategy(async (token, done) => {
     const authorization = await Config.getInstance().getAuthorizationByToken(token)

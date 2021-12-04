@@ -10,3 +10,4 @@ vosk*
 dump
 server/store
 server/build
+*.log
