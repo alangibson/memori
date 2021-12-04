@@ -36,7 +36,7 @@ function start() {
     console.info('Starting Memori application');
 
     // See if we are authenticated
-    fetch(`/recall?q=`, { credentials: "include" })
+    fetch(`/memory?q=`, { credentials: "include" })
         .then((response) => {
             if (response.status >= 400) {
                 appendHtmlToResults(`
@@ -68,7 +68,7 @@ function find(q, sort) {
     // Find and save Authorization token
     // const token = document.querySelector(`input[name='token']`).value;
 
-    fetch(`/recall?q=${q}&sort=${sort}`, {
+    fetch(`/memory?q=${q}&sort=${sort}`, {
         // headers: {
         //     Authorization: `Bearer ${token}`
         // },
@@ -96,7 +96,7 @@ function find(q, sort) {
 
                         let innerHTML = `
                             <div class="property name">
-                                <a href="/recall?@id=${result.thing['@id']}">
+                                <a href="/memory?@id=${result.thing['@id']}">
                                     ${result.thing.name}
                                 </a>
                             </div>
@@ -113,7 +113,7 @@ function find(q, sort) {
                                 &nbsp; ${result.thing.encodingFormat}
                             </div>
                             <div>
-                                <a href="/recall/blob?@id=${result.thing['@id']}">
+                                <a href="/memory/blob?@id=${result.thing['@id']}">
                                     Download
                                 </a>
                                 <button onclick="forget('${result.thing['@id']}')">
@@ -129,7 +129,7 @@ function find(q, sort) {
                                 result.thing['m:embedded']
                                     .map((schema) => `
                                     <div class="property name">
-                                        <a href="/recall?@id=${schema['@id']}">
+                                        <a href="/memory?@id=${schema['@id']}">
                                             ${schema.name}
                                         </a>
                                         <a href="${schema.url}">
@@ -144,7 +144,7 @@ function find(q, sort) {
                                         &nbsp; ${schema.encodingFormat}
                                     </div>
                                     <div>
-                                        <a href="/recall/blob?@id=${schema['@id']}">
+                                        <a href="/memory/blob?@id=${schema['@id']}">
                                             Download
                                         </a>
                                     </div>
@@ -170,7 +170,7 @@ function find(q, sort) {
 
 function forget(id) {
 
-    fetch('/recall?@id=' + id, {
+    fetch('/memory?@id=' + id, {
         method: 'DELETE'
     })
         .then((response) => {
@@ -208,7 +208,7 @@ function recordAudio() {
             console.log(`Remembering audio Blob of size ${blob.size}`);
             const formData = new FormData();
             formData.append('audio', blob);
-            fetch('/remember', {
+            fetch('/memory', {
                 method: 'POST',
                 body: formData
             })

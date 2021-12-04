@@ -38,7 +38,7 @@
             <button onclick="createMind(document.querySelector(`input[name='mindName']`).value)">Create</button>
         </li>
         <li>
-            <form method="get" action="/login">
+            <form method="get" action="/authorization">
                 <label for="token">Log in with token</label>
                 <input id="token" name="token" />
                 <button>Log in</button>
@@ -52,7 +52,7 @@
 
         </li>
         <li>
-            <form method="post" action="/remember" enctype="multipart/form-data">
+            <form method="post" action="/memory" enctype="multipart/form-data">
                 <label for="files">File</label>
                 <input id="files" name="file" type="file" multiple="true" />
                 <br />
@@ -60,7 +60,7 @@
             </form>
         </li>
         <li>
-            <form method="post" action="/remember" enctype="multipart/form-data">
+            <form method="post" action="/memory" enctype="multipart/form-data">
                 Photo:
                 <input name="image" type="file" accept="image/*" capture>
                 <br />
@@ -68,21 +68,21 @@
             </form>
         </li>
         <li>
-            <form method="POST" action="/remember" enctype="multipart/form-data">
+            <form method="POST" action="/memory" enctype="multipart/form-data">
                 Video: <input name="video" type="file" accept="video/*" capture>
                 <br/>
                 <button>Remember</button>
             </form>
         </li>
         <li>
-            <form method="POST" action="/remember" enctype="multipart/form-data">
+            <form method="POST" action="/memory" enctype="multipart/form-data">
                 Audio: <input name="audio" type="file" accept="audio/*" capture>
                 <br/>
                 <button>Remember</button>
             </form>
         </li>
         <li>
-            <form method="post" action="/remember" enctype="multipart/form-data" >
+            <form method="post" action="/memory" enctype="multipart/form-data" >
                 URL:
                 <input name="uri-list" />
                 <br />
@@ -90,7 +90,7 @@
             </form>
         </li>
         <li>
-            <form method="post" action="/remember" enctype="multipart/form-data" >
+            <form method="post" action="/memory" enctype="multipart/form-data" >
                 Notes
                 <br />
                 <input name="name" />

@@ -1,4 +1,4 @@
-import { writable, readable } from 'svelte/store';
+import { writable } from 'svelte/store';
 
 export const User = function () {
     const { subscribe, set } = writable('init');
@@ -9,11 +9,22 @@ export const User = function () {
     }
 }();
 
-export const Auth = function () {
-    const { subscribe, set } = writable('yes');
+export const AuthenticationState = function () {
+    const { subscribe, set } = writable(false);
     return {
         subscribe,
-        setAuthorized: (state: string) => { set(state) }
+        isAuthenticated: (state: boolean) => { 
+            console.debug(`Is Authenticated: ${state}`);
+            set(state) ;
+        }
     }
-}()
+}();
 
+export const SearchResults = function () {
+    const a: any[] = [];
+    const { subscribe, set } = writable(a);
+    return {
+        subscribe,
+        setResults: (state: any[]) => set(state)
+    }
+}();

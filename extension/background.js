@@ -23,7 +23,7 @@ function updateIcon(tabId) {
     // Make icon green if so; otherwise black 
 
     // TODO is url in tab rememebered?
-    // HEAD /recall@id=${url} ???
+    // HEAD /memory@id=${url} ???
 
     // browser.browserAction.setIcon({
     //     tabId: tabId,
@@ -64,7 +64,7 @@ async function remember(memoriUrl, authToken, url, title, blob) {
     // TODO don't hard code mime type
     formData.append('documentMimeType', blob.type);
     // Do the request to Memori
-    const memoriResponse = await fetch(`${memoriUrl}/remember`, {
+    const memoriResponse = await fetch(`${memoriUrl}/memory`, {
         method: 'POST',
         body: formData,
         headers: {

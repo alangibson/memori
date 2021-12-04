@@ -49,13 +49,14 @@ const wsProxy = httpProxy.createProxyServer({
 });
 const proxyServer = http.createServer((req, res) => {
     console.log(`${req.method} ${req.url}`);
-    if (req.url == '/livereload') {
+    if (req.url == '/livereload')
         proxy.web(req, res, { target: argv.livereload });
-    } else if (req.url?.startsWith('/livereload.js') || req.url?.startsWith('/connect'))
+    else if (req.url?.startsWith('/livereload.js') || req.url?.startsWith('/connect'))
         proxy.web(req, res, { target: argv.livereload });
-    else if (req.url?.startsWith('/memory') ||
-        req.url?.startsWith('/remember') || req.url?.startsWith('/recall') ||
-        req.url?.startsWith('/login') || req.url?.startsWith('/logout'))
+    else if (req.url?.startsWith('/memory') 
+          || req.url?.startsWith('/authorization')
+          || req.url?.startsWith('/mind')
+          || req.url?.startsWith('/ping'))
         proxy.web(req, res, { target: argv.server });
     else
         // Send everything else to PWA
@@ -69,30 +70,8 @@ proxyServer.on('upgrade', function (req, socket, head) {
 });
 proxyServer.listen(argv.port);
 
-
-
-
-
-// const app = express();
-
-// Memori server
-// app.use('/memory', proxy(argv.server));
-// app.use('/remember', proxy(argv.server));
-// app.use('/login', proxy(argv.server));
-// app.use('/logout', proxy(argv.server));
-
-// Livereload server
-// app.use(/\/livereload\.js/, argv.livereload);
-// app.use('/connect', argv.livereload);
-
-// TODO download page for browser extension
-
-// TODO in dev mode, proxy CouchDB interface?
-
-// Everything else goes to PWA
-// app.use('/', proxy(argv.pwa));
-
 // Open tunnel
+
 console.info('Opening tunnel to this server');
 const tunnel = await localtunnel({
     port: argv.port,

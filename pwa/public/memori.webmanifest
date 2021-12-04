@@ -19,7 +19,7 @@
     "theme_color": "#B12A34",
     "background_color": "#B12A34",
     "share_target": {
-        "action": "/pwa/remember/share",
+        "action": "/pwa/memory/share",
         "method": "POST",
         "enctype": "multipart/form-data",
         "params": {

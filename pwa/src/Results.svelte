@@ -1,11 +1,10 @@
 <script lang="ts">
+    import { SearchResults } from './store';
     import Result from './Result.svelte'
 </script>
 
-<section class="section">
-    <div class="container">
-        <Result />
-        <Result />
-        <Result />
-    </div>
-</section>
+<div>
+    {#each $SearchResults as result}
+        <Result memory={result.thing}/>
+    {/each}
+</div>

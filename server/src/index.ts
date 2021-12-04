@@ -48,12 +48,16 @@ export interface IRecalledMemory {
 
 export class Mind implements IPersistable {
 
+    public readonly name: string;
+    public readonly space: string;
     private path: string;
     public commands: Commands;
     private index: Index;
     private settings: ISettings;
 
     constructor(settings: ISettings, jailPath: string, space: string, name: string) {
+        this.name = name;
+        this.space = space;
         this.settings = settings;
         this.path = `${jailPath}/${space}/${name}`;
         this.commands = new Commands(`${this.path}/commands`);

@@ -1,6 +1,6 @@
 
 const TOKEN = 'lksadjf8474jfjf7474keld94i';
-const SHARE_URL = 'https://ef77-91-113-85-122.ngrok.io/remember/share';
+const SHARE_URL = 'https://ef77-91-113-85-122.ngrok.io/memory/share';
 const cacheName = 'memori';
 
 // Files to cache
@@ -28,7 +28,7 @@ self.addEventListener('fetch', (e) => {
 
     // // If this is an incoming POST request for the registered "action" URL, respond to it.
     // https://developer.mozilla.org/en-US/docs/Web/API/Request
-    if (e.request.method == 'POST' && new URL(e.request.url).pathname.endsWith('/pwa/remember/share')) {
+    if (e.request.method == 'POST' && new URL(e.request.url).pathname.endsWith('/pwa/memory/share')) {
 
         e.respondWith((async () => {
 

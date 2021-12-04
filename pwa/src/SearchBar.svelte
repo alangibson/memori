@@ -4,36 +4,23 @@
     import Paper from "@smui/paper";
     import Fab from "@smui/fab";
     import { Icon } from "@smui/common";
-    import { Auth } from './store';
+    import { AuthenticationState, SearchResults } from './store';
 
     let q = "";
 
     async function doSearch() {
-        try {
-            const results = await search(q);
-            Auth.setAuthorized('yes');
-            console.log(results);
-        } catch (e: any) {
-            // TODO handle 401
-            if (e.message == '401') {
-                Auth.setAuthorized('no');
-            } else {
-                console.error(e);
-            }
-        }
+        const [response, results] = await search(q);
+        AuthenticationState.isAuthenticated(response.ok);
+        // Pass results to Results
+        SearchResults.setResults(results);
     }
 
-    async function search(q: string) {
+    async function search(q: string): Promise<[Response, []]> {
         // const searchParams = new URLSearchParams({ q: q }).toString();
         const searchParams = `q=${q}`;
-        const response = await fetch(`/recall?${searchParams}`);
-        console.log(response);
-
-        if (response.status == 401) {
-            throw new Error("401");
-        } else {
-            // TODO
-        }
+        const response = await fetch(`/memory?${searchParams}`);
+        const results = await response.json();
+        return [response, results];
     }
 
     function handleKeyDown(event: CustomEvent | KeyboardEvent) {

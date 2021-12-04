@@ -1,12 +1,16 @@
 <script>
-    import Button from "@smui/button";
     import IconButton from "@smui/icon-button";
     import TopAppBar, {
         Row,
         Section,
-        Title,
-        AutoAdjust,
+        Title
     } from "@smui/top-app-bar";
+    import { AuthenticationState } from "./store";
+
+    async function logOut() {
+        const response = await fetch('/authorization', { method: 'DELETE' });
+        AuthenticationState.isAuthenticated(! response.ok);
+    }
 </script>
 
 <TopAppBar variant="static">
@@ -15,7 +19,7 @@
             Memori<Title>Never Forget</Title>
         </Section>
         <Section align="end" toolbar>
-            <IconButton class="material-icons" aria="Log Out">
+            <IconButton class="material-icons" aria="Log Out" on:click={logOut}>
                 logout
             </IconButton>
             <!-- <IconButton class="material-icons">

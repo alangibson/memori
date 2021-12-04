@@ -1,19 +1,10 @@
 <script>
     // import Paper, { Content as Card } from "@smui/paper";
-    import Card, { Content, PrimaryAction } from "@smui/card";
+    import Card, { Content } from "@smui/card";
     import LayoutGrid, { Cell } from "@smui/layout-grid";
-    import IconButton from "@smui/icon-button";
     import Button, { Group, Label, Icon } from "@smui/button";
-    import List, { Item, Separator, Text } from "@smui/list";
 
-    let memory = {
-        url: "https://example.com",
-        name: "Memory Name",
-        abstract:
-            "blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah ...",
-        encodingFormat: "text/plain",
-        "@type": "TextObject",
-    };
+    export let memory;
 </script>
 
 <Card variant="outlined">

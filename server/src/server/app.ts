@@ -78,11 +78,11 @@ function parseRememberableFromText(text: string): IRememberable {
         }
 }
 
-app.post('/remember/share',
+app.post('/memory/share',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
-        console.log('/remember/share', req);
+        console.log('/memory/share', req);
 
         // Get org and mind via tokens structure
         // Casting to AccessRule because we should return Unauthorized if no access
@@ -107,7 +107,7 @@ app.post('/remember/share',
             return res.status(303)
                 .setHeader('Location',
                     // @ts-ignore
-                    `/recall?@id=${thing['@id']}`)
+                    `/memory?@id=${thing['@id']}`)
                 .end();
         } else {
             return res.status(400)
@@ -118,18 +118,18 @@ app.post('/remember/share',
 
 
 // Remember resource endpoint
-app.post("/remember",
+app.post("/memory",
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
-        console.debug(`POST /remember : called`);
+        console.debug(`POST /memory : called`);
 
         // Get org and mind via tokens structure
         // Casting to AccessRule because we should return Unauthorized if no access
         const authorization: AccessRule = <AccessRule>req.user;
 
         // Load up Mind
-        console.log(`POST /remember : Memory is ${authorization.name}`);
+        console.log(`POST /memory : Memory is ${authorization.name}`);
         const mind = await Config.getInstance().newMind(authorization);
         await mind.load();
 
@@ -155,11 +155,11 @@ app.post("/remember",
             );
 
         // Remember each file we get
-        console.debug(`POST /remember : Trying to remember ${req.files?.length} files`)
+        console.debug(`POST /memory : Trying to remember ${req.files?.length} files`)
         const rememberedFiles: IMemory[] = await Promise.all(
             (<any[]>req.files)?.map(async (file: any): Promise<IMemory> => {
 
-                console.debug(`POST /remember : Field name=${file.fieldname}, original name=${file.originalname}, mime type=${file.mimetype},encoding=${file.encoding}, size=${file.size}`);
+                console.debug(`POST /memory : Field name=${file.fieldname}, original name=${file.originalname}, mime type=${file.mimetype},encoding=${file.encoding}, size=${file.size}`);
 
                 return mind.remember({
                     encodingFormat: file.mimetype,
@@ -172,20 +172,20 @@ app.post("/remember",
             })
         );
         remembered = remembered.concat(rememberedFiles);
-        console.log(`POST /remember : Remembered ${remembered.length} Memories`);
+        console.log(`POST /memory : Remembered ${remembered.length} Memories`);
 
         // Save Mind satate
         await mind.save();
 
         // Respond to request with 201 Created
         const r = res.status(201)
-        remembered.forEach(memory => 
-            r.setHeader('Location', `/recall?@id=${memory['@id']}`));
+        remembered.forEach(memory =>
+            r.setHeader('Location', `/memory?@id=${memory['@id']}`));
         return r.end();
     });
 
 // Search and query endpoint
-app.get('/recall',
+app.get('/memory',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
@@ -194,7 +194,7 @@ app.get('/recall',
         const authorization: AccessRule = <AccessRule>req.user;
 
         if (req.query['@id']) {
-            console.debug(`GET /recall : Getting memory by id ${req.query['@id']}`);
+            console.debug(`GET /memory : Getting memory by id ${req.query['@id']}`);
 
             const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
@@ -202,7 +202,7 @@ app.get('/recall',
             const atId: URL = new URL(req.query['@id'].toString());
             const found: IRecalledMemory = await memory.recall(atId);
 
-            console.debug(`GET /recall : Found memory ${memory}`);
+            console.debug(`GET /memory : Found memory ${memory}`);
 
             if (found)
                 return res.status(200)
@@ -213,7 +213,7 @@ app.get('/recall',
                     .end();
 
         } else if (req.query.q && req.query.q.toString() != '') {
-            console.debug(`GET /recall : Searching for ${req.query.q}`);
+            console.debug(`GET /memory : Searching for ${req.query.q}`);
 
             const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
@@ -241,13 +241,13 @@ app.get('/recall',
                     .end();
 
         } else {
-            console.debug(`GET /recall : Listing all memories`);
+            console.debug(`GET /memory : Listing all memories`);
 
             const memory = await Config.getInstance().newMind(authorization);
             await memory.load();
 
             const found: IRecalledMemory[] = await memory.all();
-            console.debug(`GET /recall : Found ${found.length} memories`);
+            console.debug(`GET /memory : Found ${found.length} memories`);
 
             // Respond to request
             return res.status(200)
@@ -257,7 +257,7 @@ app.get('/recall',
 
     });
 
-app.get('/recall/blob',
+app.get('/memory/blob',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
@@ -305,7 +305,7 @@ app.get('/recall/blob',
     });
 
 // Forget memories
-app.delete('/recall',
+app.delete('/memory',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
@@ -329,17 +329,21 @@ app.delete('/recall',
     });
 
 app.post("/mind", async (req, res) => {
+    
+    console.debug(`POST /mind`);
+
+    const config: Config = Config.getInstance();
 
     const storageRoot: string = 'store';
     const spaceName: string = uuid();
-    const mindName: string | undefined = req.body.mindName?.toString();
 
-    if (!mindName)
-        return res.status(400)
-            .send('No mind name provided')
-            .end();
+    console.debug(`POST /mind : Fetching default mind name`);
+    const mindName = (await config.settings()).defaultMindName;
+    console.debug(`POST /mind : Default mind name is: ${mindName}`);
+    // const mindName: string = req.body.mindName?.toString() || defaultMindName;
 
-    const config: Config = Config.getInstance();
+    console.debug(`POST /mind : Creating name: ${mindName}`);
+
     const token: string = await config.allow(spaceName, mindName, 'all');
     await config.save();
 
@@ -354,23 +358,44 @@ app.post("/mind", async (req, res) => {
 });
 
 // https://owasp.org/www-community/HttpOnly
-app.get('/login',
+app.get('/authorization',
     async (req, res) => {
-        const token = req.query.token;
-        res.status(302)
+
+        // See if token is good
+        const token: string|undefined = req.query.token?.toString();
+
+        if (!token)
+            return res.sendStatus(400);
+
+        const config: Config = Config.getInstance();
+        const access = await config.getAuthorizationByToken(token);
+        console.debug(`GET /authorization : Found access for token ${token}`, access);
+        if (! access)
+            return res.sendStatus(401);
+        
+        res.status(204)
             .setHeader('Set-Cookie', `Authorization=${token}; Max-Age>=0; path=/; HttpOnly; SameSite=Lax`)
-            .setHeader('Location', '/')
+            // .setHeader('Location', '/')
             .end();
     }
 );
 
-app.get('/logout',
+app.delete('/authorization',
     async (req, res) => {
-        res.status(302)
+        res.status(204)
             .setHeader('Set-Cookie', 'Authorization=""; Max-Age>=0; path=/')
-            .setHeader('Location', '/')
+            // .setHeader('Location', '/')
             .end();
     }
 );
+
+app.get('/ping', passport.authenticate(['bearer', 'cookie'], { session: false }),
+    async (req, res) => {
+        const authorization: AccessRule = <AccessRule>req.user;
+        if (! authorization)
+            return res.sendStatus(401);
+        else
+        return res.sendStatus(204);
+    });
 
 export default app;

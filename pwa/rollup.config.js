@@ -109,13 +109,13 @@ export default {
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production
-		!production && livereload({
-			watch: 'public',
-			// We have to include it in HTML ourself
-			inject: false,
-			// port: 80
-			verbose: true
-		}),
+		// !production && livereload({
+		// 	watch: 'public',
+		// 	// We have to include it in HTML ourself
+		// 	inject: false,
+		// 	// port: 80
+		// 	verbose: true
+		// }),
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify

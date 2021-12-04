@@ -208,6 +208,24 @@ async function interactiveInput(memory: Mind) {
 
 }
 
+async function constructMindFromToken(token: string): Promise<Mind> {
+
+    const auth = await Config.getInstance().getAuthorizationByToken(token);
+
+    if (! auth)
+        throw new Error('Could not find mind with given token');
+
+    const mind = await Config.getInstance().newMind({
+        name: auth.name,
+        scope: auth.scope,
+        space: auth.space
+    });
+
+    await mind.load();
+
+    return mind;
+}
+
 /**
  *  memori remember http://example.com/one.html
 
@@ -227,21 +245,14 @@ async function interactiveInput(memory: Mind) {
  */
 async function main() {
 
-    const mindName = 'main';
-    const mind = await Config.getInstance().newMind({
-        name: mindName,
-        scope: "all",
-        space: "73076540-ac3b-419c-bbb6-c5abf92d4916"
-    });
-
-    // Load saved Memory from disk
-    await mind.load();
-
     // Build command parser
-    const program = new Command();
+    const program = new Command()
+        .option('-t, --token <token>', 'Authorization token');
+
     program.command('peek')
-        .argument('[url]', 'URL to examine')
+        .argument('url', 'URL to examine')
         .action(async (url: string) => {
+            const mind = await constructMindFromToken(program.opts().token);
             const things: IMemory[] = await mind.parse(
                 await mind.fetch(new URL(url))
             );
@@ -250,6 +261,7 @@ async function main() {
     program.command('remember')
         .argument('[thought]', 'URL. If omitted, enter interactive mode.')
         .action(async (thought: string | null) => {
+            const mind = await constructMindFromToken(program.opts().token);
             if (thought == null) {
                 await interactiveInput(mind);
             } else {
@@ -266,9 +278,9 @@ async function main() {
     program.command('forget')
         .argument('id', 'URL to forget.')
         .action(async (id: string) => {
-
+            const mind = await constructMindFromToken(program.opts().token);
             // First remove from command log
-            const log = new Commands(`./${mindName}/commands`);
+            const log = new Commands(`./${mind.name}/commands`);
             await log.replay(async (command: ICommand) => {
                 if (command.url != undefined && command.url == new URL(id))
                     await log.remove(command);
@@ -286,6 +298,7 @@ async function main() {
         .argument('q', 'Text to search for')
         .argument('[i]', 'Enter interactive mode')
         .action(async (q: string, i: boolean) => {
+            const mind = await constructMindFromToken(program.opts().token);
             const found: IRecalledMemory[] = await mind.search(q);
             if (i)
                 await displayResults(found);
@@ -294,6 +307,7 @@ async function main() {
         });
     program.command('rebuild')
         .action(async () => {
+            const mind = await constructMindFromToken(program.opts().token);
             // Clear memory
             await mind.clear();
             // read in command.log line by line
@@ -318,6 +332,8 @@ async function main() {
     program.command('reindex')
         .argument('id', '@id to reindex')
         .action(async (id: string) => {
+            const mind = await constructMindFromToken(program.opts().token);
+
             const atId = new URL(id);
 
             // Get Memory with _attachments
@@ -340,6 +356,7 @@ async function main() {
     program.command('crawl')
         .argument('root', 'Root path to start from')
         .action(async (root: string) => {
+            const mind = await constructMindFromToken(program.opts().token);
             await new FilesystemCrawler()
                 .crawl(new URL(root),
                     async (path: string) => {
@@ -357,9 +374,6 @@ async function main() {
         });
 
     program.parse(process.argv);
-
-    // TODO
-    // memori recall http://example.com/one.html
 }
 
 // Run main program
