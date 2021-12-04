@@ -3,6 +3,7 @@ import { ISettings } from "../configuration";
 import { VideoEnhancer } from "./video";
 import { ImageEnhancer } from "./image";
 import { AudioEnhancer } from "./audio";
+import { WebPageEnhancer } from "./webpage";
 
 // export type ProcessingResultType = [IMemory, IRememberable]
 
@@ -27,7 +28,10 @@ export class Enhancer implements IEnhancer {
     }
 
     async enhance(media: IMemory): Promise<IMemory> {
-        if (media["@type"] == 'VideoObject')
+        if (media["@type"] == 'WebPage')
+            return new WebPageEnhancer()
+                .enhance(media);
+        else if (media["@type"] == 'VideoObject')
             return new VideoEnhancer(`${process.cwd()}/etc/${this.settings.voskModel}`)
                 .enhance(media);
         else if (media["@type"] == 'ImageObject')

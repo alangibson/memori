@@ -136,6 +136,7 @@ app.post("/memory",
         let remembered: IMemory[] = [];
 
         // Remember uri lists
+        // Any post with a 'uri-list' field is 
         if (req.body['uri-list'])
             remembered.push(
                 await mind.remember({
@@ -145,12 +146,15 @@ app.post("/memory",
             );
 
         // Remember user notes
-        if (req.body.name && req.body.mimetype && req.body.text)
+        // Any post with a 'note' field is treated as a note
+        if (req.body.note)
             remembered.push(
                 await mind.remember({
-                    name: req.body.name,
-                    encodingFormat: req.body.mimetype,
-                    blob: Buffer.from(req.body.text)
+                    name: req.body.name, // possibly undefined
+                    url: req.body.url, // possibly undefined
+                    encodingFormat: req.body.mimetype || 'text/plain',
+                    blob: Buffer.from(req.body.note, 'utf8'),
+                    encoding: 'utf8'
                 })
             );
 
@@ -257,7 +261,7 @@ app.get('/memory',
 
     });
 
-app.get('/memory/blob',
+app.get('/memory/attachment',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
@@ -270,6 +274,9 @@ app.get('/memory/blob',
 
             // PouchDB url encodes all ids, so we need to do so too
             const atId: URL = new URL(req.query['@id'].toString());
+            const attachmentId: string = req.query['attachment']?.toString() || atId.toString();
+
+            console.debug(`GET /memory/attachment : Getting attachment ${attachmentId} for memory ${atId}`);
 
             try {
 
@@ -279,7 +286,7 @@ app.get('/memory/blob',
                 if (found) {
 
                     // Get our attachment
-                    const attachment = found.thing._attachments?.[atId.toString()];
+                    const attachment = found.thing._attachments?.[attachmentId];
 
                     // If there is no attachment, then 404 Not Found
                     if (attachment == null)

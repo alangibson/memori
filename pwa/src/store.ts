@@ -20,11 +20,21 @@ export const AuthenticationState = function () {
     }
 }();
 
+// TODO should be IMemory
 export const SearchResults = function () {
     const a: any[] = [];
     const { subscribe, set } = writable(a);
     return {
         subscribe,
         setResults: (state: any[]) => set(state)
+    }
+}();
+
+// TODO should be IMemory
+export const SelectedMemory = function () {
+    const { subscribe, set } = writable(undefined);
+    return {
+        subscribe,
+        setMemory: (state: any) => set(state)
     }
 }();

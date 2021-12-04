@@ -46,6 +46,7 @@ export default {
 			compilerOptions: {
 				// enable run-time checks when not in production
 				dev: !production,
+				hydratable: true
 			},
 			// Typescript support
 			preprocess: sveltePreprocess({
@@ -56,7 +57,7 @@ export default {
 				},
 			}
 			),
-			emitCss: true,
+			emitCss: true
 		}),
 
 		// Typescript support

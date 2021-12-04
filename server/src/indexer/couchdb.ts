@@ -39,6 +39,7 @@ export class CouchDbDatabase implements IDatabase, IPersistable {
     async get(id: string, options?: DatabaseGetOptions): Promise<IMemory> {
 
         // attachments=true means data will be included as base64 encoded string.
+        // This is bad because Javascript only allows strings up to 512MB in size.
         // _attachments is always included no matter what.
         const attachments = options?.attachments;
         delete options?.attachments;
@@ -52,23 +53,32 @@ export class CouchDbDatabase implements IDatabase, IPersistable {
             throw new Error(`Memory ${id} not found`);
 
         // Get blob for every attachment
+        console.debug(`CouchDbDatabase.get() : Memory ${id} has ${Object.keys(memory._attachments || {}).length} attachments`);
         if (memory._attachments && attachments && options?.binary) {
 
             console.debug(`CouchDbDatabase.get() : Transforming attachments to binary: ${memory._attachments}`);
-            
+
             for (const [key, attachmentMeta] of Object.entries(memory._attachments)) {
 
-                // Get attachment like this. Otherwise we get it as a huge string
-                console.debug(`CouchDbDatabase.get() : Attachment of Memory ${id} is ${key}`);
-                const blob: Buffer|undefined = await this.db?.attachment.get(id, key);
+                // We have to urlencode the key because CouchDB does it
+                const attachmentId: string = encodeURIComponent(key);
 
-                if (blob) {
-                    console.debug(`CouchDbDatabase.get() : Attachment ${key} length is ${blob.length}`);
-                    // Base64 decode attachments like PouchDB client does
-                    memory._attachments[key].data = blob;            
-                } else {
-                    console.debug(`CouchDbDatabase.get() : No data found for ${key}. Did you set attachments=true?`);
+                // Get attachment like this. Otherwise we get it as a huge string
+                console.debug(`CouchDbDatabase.get() : Attachment key of Memory ${id} is ${attachmentId}`);
+
+                try {
+                    const blob: Buffer | undefined = await this.db?.attachment.get(id, attachmentId);
+                    if (blob) {
+                        console.debug(`CouchDbDatabase.get() : Attachment ${key} length is ${blob.length}`);
+                        // Base64 decode attachments like PouchDB client does
+                        memory._attachments[key].data = blob;
+                    } else {
+                        console.debug(`CouchDbDatabase.get() : No data found for ${key}. Did you set attachments=true?`);
+                    }    
+                } catch (e) {
+                    console.error(`CouchDbDatabase.get() : Failed to get attachment ${key} for ${id}`, e);
                 }
+
 
             }
 
@@ -145,19 +155,19 @@ export class CouchDbDatabase implements IDatabase, IPersistable {
                 const attachments = convertAttachments(memory._attachments);
                 delete memory._attachments;
                 await this.db?.multipart.insert(memory, attachments, memory['@id'])
-                // // Try again if we get an error
-                .catch(async (error) => {
-                    console.warn(`Failed on second upsert try: ${error}`);
-                    await this.upsert(id, handler);
-                });
+                    // // Try again if we get an error
+                    .catch(async (error) => {
+                        console.warn(`Failed on second upsert try: ${error}`);
+                        await this.upsert(id, handler);
+                    });
             } else {
                 console.debug(`Doc ${id} does NOT exist in db. Local has NO _attachments`);
                 await this.db?.insert(memory, memory['@id'])
-                // // Try again if we get an error
-                .catch(async (error) => {
-                    console.warn(`Failed on second upsert try: ${error}`);
-                    await this.upsert(id, handler);
-                });
+                    // // Try again if we get an error
+                    .catch(async (error) => {
+                        console.warn(`Failed on second upsert try: ${error}`);
+                        await this.upsert(id, handler);
+                    });
             }
         }
     }
