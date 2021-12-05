@@ -9,7 +9,9 @@
 	import { AuthenticationState } from "./store";
 	import "svelte-material-ui/bare.css";
 	import ViewMemory from "./ViewMemory.svelte";
-import ViewScreenshot from "./ViewScreenshot.svelte";
+	import ViewScreenshot from "./ViewScreenshot.svelte";
+	import AddImage from "./AddImage.svelte";
+import AddVideo from "./AddVideo.svelte";
 
 	// Ping the server to see if we are authorized
 	async function ping() {
@@ -28,6 +30,8 @@ import ViewScreenshot from "./ViewScreenshot.svelte";
 	<Router>
 		<Route path="/"><Home /></Route>
 		<Route path="/note"><Note /></Route>
+		<Route path="/add/image"><AddImage /></Route>
+		<Route path="/add/video"><AddVideo /></Route>
 		<Route path="/view/memory"><ViewMemory /></Route>
 		<Route path="/view/memory/screenshot"><ViewScreenshot /></Route>
 	</Router>

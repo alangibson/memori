@@ -1,7 +1,7 @@
 <script>
     import { Image } from "@smui/image-list";
     import { generateFromString } from "generate-avatar";
-    import { Link, navigate } from "svelte-routing";
+    import { navigate } from "svelte-routing";
     import { SelectedMemory } from "./store";
     // import Paper, { Content as Card } from "@smui/paper";
     import Card, { Content } from "@smui/card";
@@ -24,6 +24,16 @@
         console.log(e);
         const svg = generateFromString(memory["@id"]);
         e.target.src = `data:image/svg+xml;utf8,${svg}`;
+    }
+
+    async function forgetMemory() {
+        const response = await fetch(`/memory?@id=${memory["@id"]}`, {
+            method: "DELETE",
+        });
+        
+        // TODO handle 401
+
+        // TODO trigger SearchBar#doSearch
     }
 </script>
 
@@ -53,10 +63,12 @@
         <Cell spanDevices={{ desktop: 3 }}>
             <Group class="memory-actions">
                 <Button variant="outlined">
-                    <Icon class="material-icons">download</Icon>
-                    <Label>Download</Label>
+                    <a href="/memory/attachment?@id={memory['@id']}&attachment={memory['@id']}">
+                        <Icon class="material-icons">download</Icon>
+                        <Label>Download</Label>
+                    </a>
                 </Button>
-                <Button variant="outlined">
+                <Button variant="outlined" on:click={forgetMemory}>
                     <Icon class="material-icons">delete</Icon>
                     <Label>Forget</Label>
                 </Button>

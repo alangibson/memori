@@ -12,11 +12,17 @@
         navigate("/note");
     }
 
-    function addPhoto() {}
+    function addImage() {
+        surface.setOpen(false);
+        navigate("/add/image");
+    }
 
     function addAudio() {}
 
-    function addVideo() {}
+    function addVideo() {
+        surface.setOpen(false);
+        navigate("/add/video");
+    }
 
     function addLink() {}
 
@@ -36,7 +42,7 @@
                     <Label>Note</Label>
                 </Button>
             </Item>
-            <Item on:SMUI:action={addPhoto}>
+            <Item on:SMUI:action={addImage}>
                 <Button>
                     <Icon class="material-icons">add_a_photo</Icon>
                     <Label>Photo</Label>

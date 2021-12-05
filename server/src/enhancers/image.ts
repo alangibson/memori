@@ -1,8 +1,9 @@
+import sharp from 'sharp';
 import { Tensor3D } from '@tensorflow/tfjs';
 import tfModel, { DetectedObject } from '@tensorflow-models/coco-ssd';
 import Tensorflow from '@tensorflow/tfjs-node';
 import  Tesseract from "node-tesseract-ocr";
-import { abstractFromString } from '../parsers';
+import { abstractFromString, nameFromString } from '../parsers';
 import { IMemory } from '../models';
 import { IEnhancer } from '.';
 
@@ -12,6 +13,13 @@ export class ImageEnhancer implements IEnhancer {
 
     constructor(language: string) {
         this.language = language;
+    }
+
+    private async thumbnail(image: Buffer) {
+        return await sharp(image)
+            .resize(250, 250, { fit: 'cover', position: 'top' })
+            .webp()
+            .toBuffer();
     }
 
     private async ocr(blob: Buffer): Promise<string> {
@@ -36,8 +44,12 @@ export class ImageEnhancer implements IEnhancer {
 
     async enhance(memory: IMemory): Promise<IMemory> {
 
+        // Make sure attachments is initialized
+        if (! memory._attachments)
+            memory._attachments = {};
+
         // Try to get attachment blob. Return Memory unchanged if we can't
-        const blob: Buffer|undefined = memory._attachments?.[memory['@id']]?.data;
+        const blob: Buffer|undefined = memory._attachments[memory['@id']]?.data;
         if (blob == undefined)
             return memory;
 
@@ -49,14 +61,23 @@ export class ImageEnhancer implements IEnhancer {
         console.debug(`ImageParser.parse() : Performing object recognition ${memory.encodingFormat} ${memory.url}`);
         const detectedKeywords = await this.detect(blob);
 
+        // Make thumbnail
+        const thumbnail: Buffer = await this.thumbnail(blob);
+        // then add to attachments
+        memory._attachments['thumbnail'] = {
+            content_type: memory.encodingFormat,
+            data: thumbnail,
+            length: thumbnail.length
+        };
+
         const text = ocrText + ' ' + detectedKeywords;
         return {
             ...memory,
             text: memory.text + ' ' + text,
             abstract: abstractFromString(text),
-            name: memory.name || text.slice(0, 50),
+            name: memory.name || nameFromString(text),
             description: abstractFromString(text),
-        }
+        };
     }
 
 }
