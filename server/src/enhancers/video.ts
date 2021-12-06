@@ -1,10 +1,12 @@
 import { promises as fs } from "fs";
+import { URL } from 'url';
 import mime from 'mime-types';
 import youtubedl, { YtResponse } from 'youtube-dl-exec';
-import { IIndexable, IMemory } from "../models";
+import { IIndexable, IMemory, IRememberable } from "../models";
 import { SpeachToText } from "../stt";
 import { abstractFromString } from "../parsers";
 import { IEnhancer } from "./index";
+import { Fetcher } from "../fetcher";
 
 interface IDownloadResult {
     blob: Buffer;
@@ -56,6 +58,25 @@ export class VideoEnhancer implements IEnhancer {
         };
     }
 
+    async thumbnail(url: string): Promise<[{}, {}]> {
+        const rememberable: IRememberable = await new Fetcher().fetch(new URL(url));
+        let thumbnailSchema = {};
+        let thumbnailAttachmentSchema = {};
+        if (url) {
+            thumbnailSchema = { thumbnail: { url: rememberable.url } };
+            thumbnailAttachmentSchema = {
+                thumbnail: {
+                    content_type: rememberable.encodingFormat,
+                    data: rememberable.blob    
+                }
+            };
+            return [thumbnailSchema, thumbnailAttachmentSchema];
+        } else {
+            return [{}, {}];
+        }
+
+    }
+
     async enhance(media: IMemory): Promise<IMemory> {
 
         // TODO make this configurable
@@ -73,17 +94,15 @@ export class VideoEnhancer implements IEnhancer {
             format: format
         });
 
+        // Find a thumbnail
+        const [thumbnailSchema, thumbnailAttachmentSchema] = 
+            await this.thumbnail(response.thumbnail);
+
         // Download and OCR video
         // TODO turn on
         const dl = await this.download(media, format);
         media.text = media.text + ' ' + dl.text
         const mimeType = dl.mimeType;
-
-        // TODO site name is response.extractor
-        // duration (seconds?)
-        // categories and tags (list of keywords)
-        // thumbnailUrl = response.thumbnail
-        // source url = response.webpage_ur
 
         // We need to try to make @id different from the url of the parent WebPage
         // because most tube sites have id conflicts
@@ -102,11 +121,13 @@ export class VideoEnhancer implements IEnhancer {
             author: response.uploader,
             dateCreated: response.upload_date,
             dateModified: response.upload_date, 
+            ...thumbnailSchema,
             _attachments: {
                 [id]: {
                     content_type: dl.mimeType,
                     data: dl.blob
-                }
+                },
+                ...thumbnailAttachmentSchema
             }
         };
 

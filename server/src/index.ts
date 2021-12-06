@@ -9,7 +9,7 @@ import { ICommittable, IMemory, IRememberable } from './models'
 import { Enhancer } from "./enhancers";
 import { Index } from "./indexer/indexer";
 import { Commands } from "./commands";
-import { FileFetcher, HttpFetcher } from "./fetcher";
+import { Fetcher } from "./fetcher";
 import { Parser } from './parsers';
 import { ISettings } from "./configuration";
 
@@ -74,16 +74,7 @@ export class Mind implements IPersistable {
     }
 
     public async fetch(uri: URL): Promise<ICommittable> {
-        // Dispatch to the appropriate fetcher
-        let response: ICommittable;
-        if (uri.protocol.startsWith('http'))
-            response = await new HttpFetcher().fetch(uri);
-        else if (uri.protocol.startsWith('file'))
-            response = await new FileFetcher().fetch(uri);
-        else
-            // TODO just assume its a local file path
-            throw new Error(`Protocol not supported : ${uri.protocol}`);
-        return response;
+       return await new Fetcher().fetch(uri);
     }
 
     public async parse(response: ICommittable): Promise<IMemory[]> {

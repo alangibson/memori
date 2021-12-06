@@ -1,11 +1,13 @@
 <script lang="ts">
     import { Image } from "@smui/image-list";
+    import Tab from "@smui/tab";
+    import TabBar from "@smui/tab-bar";
     import { createAvatar } from "@dicebear/avatars";
     import * as style from "@dicebear/avatars-jdenticon-sprites";
     import { navigate } from "svelte-routing";
     import { SelectedMemory } from "./store";
     import Card, { Content } from "@smui/card";
-    import LayoutGrid, { Cell } from "@smui/layout-grid";
+    import LayoutGrid, { Cell, InnerGrid } from "@smui/layout-grid";
     import Button, { Group, Label, Icon } from "@smui/button";
 
     export let memory: any;
@@ -42,6 +44,21 @@
             return `/memory/attachment?@id=${memory["@id"]}&attachment=${memory["@id"]}`;
         else return memory.url;
     }
+
+    function tabNames(): string[] {
+        return [
+            memory["@type"],
+            ...memory["m:embedded"]
+                .map((memory: any) => memory["@type"])
+                // Blacklist some object types
+                .filter(
+                    (typeName: string) =>
+                        !["Organization", "WPHeader"].includes(typeName)
+                ),
+        ];
+    }
+
+    let active = tabNames()[0];
 </script>
 
 <Card variant="outlined">
@@ -57,17 +74,53 @@
             />
         </Cell>
 
-        <Cell spanDevices={{ desktop: 6, tablet: 5 }}>
-            <Content>
-                <h4>
-                    <a href={url()}>{memory.name}</a>
-                </h4>
-                <div>{memory.abstract}</div>
-                <h5>{memory["@type"]} / {memory.encodingFormat}</h5>
-            </Content>
+        <Cell spanDevices={{ desktop: 9, tablet: 5 }}>
+            <TabBar tabs={tabNames()} let:tab bind:active>
+                <Tab {tab} minWidth>
+                    <Label>{tab}</Label>
+                </Tab>
+            </TabBar>
+
+            {#each [memory, ...memory["m:embedded"]] as schema}
+            <div style={active != schema["@type"] ? "display: none" : ""}>
+                <InnerGrid >
+                    <Cell span={8}>
+                        <Content>
+                            <h4>
+                                <a href={url()}>{schema.name}</a>
+                            </h4>
+                            <div>{schema.abstract}</div>
+                            <h5>{schema["@type"]} / {schema.encodingFormat}</h5>
+                        </Content>
+                    </Cell>
+                    <Cell>
+                        <Group class="memory-actions">
+                            <Button variant="outlined">
+                                <a
+                                    href="/memory/attachment?@id={schema[
+                                        '@id'
+                                    ]}&attachment={schema['@id']}"
+                                >
+                                    <Icon class="material-icons">download</Icon>
+                                    <Label>Download</Label>
+                                </a>
+                            </Button>
+                            <Button variant="outlined" on:click={forgetMemory}>
+                                <Icon class="material-icons">delete</Icon>
+                                <Label>Forget</Label>
+                            </Button>
+                            <Button variant="outlined" on:click={viewMemory}>
+                                <Icon class="material-icons">read_more</Icon>
+                                <Label>More</Label>
+                            </Button>
+                        </Group>
+                    </Cell>
+                </InnerGrid>
+            </div>
+            {/each}
         </Cell>
 
-        <Cell spanDevices={{ desktop: 3 }}>
+        <!-- <Cell spanDevices={{ desktop: 3 }}>
             <Group class="memory-actions">
                 <Button variant="outlined">
                     <a
@@ -88,7 +141,7 @@
                     <Label>More</Label>
                 </Button>
             </Group>
-        </Cell>
+        </Cell> -->
     </LayoutGrid>
 </Card>
 
