@@ -20,7 +20,7 @@ function saveOptions(event) {
         });
 
     // Close options popup
-    event.currentTarget.parentNode.removeChild(event.currentTarget);
+    // event.currentTarget.parentNode.removeChild(event.currentTarget);
 
     event.preventDefault();
 }
