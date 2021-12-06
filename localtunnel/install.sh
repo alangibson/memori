@@ -35,11 +35,11 @@ crontab -e
 0 12 * * * /snap/bin/certbot renew
 
 
-# I using Vue CLI serve
-# Add to vue.config.js
-module.exports = {
-    devServer: {
-        // disableHostCheck: true
-        public: 'memori.my.memori.link'
-    }
-};
+# # I using Vue CLI serve
+# # Add to vue.config.js
+# module.exports = {
+#     devServer: {
+#         // disableHostCheck: true
+#         public: 'memori.my.memori.link'
+#     }
+# };
