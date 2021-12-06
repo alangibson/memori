@@ -1,14 +1,14 @@
-<script>
+<script lang="ts">
     import { Image } from "@smui/image-list";
-    import { generateFromString } from "generate-avatar";
+    import { createAvatar } from "@dicebear/avatars";
+    import * as style from "@dicebear/avatars-jdenticon-sprites";
     import { navigate } from "svelte-routing";
     import { SelectedMemory } from "./store";
-    // import Paper, { Content as Card } from "@smui/paper";
     import Card, { Content } from "@smui/card";
     import LayoutGrid, { Cell } from "@smui/layout-grid";
     import Button, { Group, Label, Icon } from "@smui/button";
 
-    export let memory;
+    export let memory: any;
 
     function viewMemory() {
         SelectedMemory.setMemory(memory);
@@ -20,20 +20,27 @@
         navigate("/view/memory/screenshot");
     }
 
-    function defaultImage(e) {
-        console.log(e);
-        const svg = generateFromString(memory["@id"]);
-        e.target.src = `data:image/svg+xml;utf8,${svg}`;
+    function defaultImage(e: any) {
+        e.target.src = createAvatar(style, {
+            seed: memory["@id"],
+            dataUri: true,
+        });
     }
 
     async function forgetMemory() {
         const response = await fetch(`/memory?@id=${memory["@id"]}`, {
             method: "DELETE",
         });
-        
+
         // TODO handle 401
 
         // TODO trigger SearchBar#doSearch
+    }
+
+    function url(): string {
+        if (memory.url.startsWith("cid:"))
+            return `/memory/attachment?@id=${memory["@id"]}&attachment=${memory["@id"]}`;
+        else return memory.url;
     }
 </script>
 
@@ -53,7 +60,7 @@
         <Cell spanDevices={{ desktop: 6, tablet: 5 }}>
             <Content>
                 <h4>
-                    <a href={memory.url}>{memory.name}</a>
+                    <a href={url()}>{memory.name}</a>
                 </h4>
                 <div>{memory.abstract}</div>
                 <h5>{memory["@type"]} / {memory.encodingFormat}</h5>
@@ -63,7 +70,11 @@
         <Cell spanDevices={{ desktop: 3 }}>
             <Group class="memory-actions">
                 <Button variant="outlined">
-                    <a href="/memory/attachment?@id={memory['@id']}&attachment={memory['@id']}">
+                    <a
+                        href="/memory/attachment?@id={memory[
+                            '@id'
+                        ]}&attachment={memory['@id']}"
+                    >
                         <Icon class="material-icons">download</Icon>
                         <Label>Download</Label>
                     </a>
@@ -74,7 +85,7 @@
                 </Button>
                 <Button variant="outlined" on:click={viewMemory}>
                     <Icon class="material-icons">read_more</Icon>
-                    <Label>View</Label>
+                    <Label>More</Label>
                 </Button>
             </Group>
         </Cell>

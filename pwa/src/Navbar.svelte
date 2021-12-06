@@ -1,4 +1,5 @@
 <script>
+    import { Link } from 'svelte-routing';
     import IconButton from "@smui/icon-button";
     import { Image, ImageAspectContainer } from "@smui/image-list";
     import TopAppBar, { Row, Section } from "@smui/top-app-bar";
@@ -21,7 +22,7 @@
 <TopAppBar variant="static">
     <Row>
         <Section>
-            Memori
+            <Link to="/">Memori</Link>
         </Section>
 
         <Section>

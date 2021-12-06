@@ -36,7 +36,7 @@ export class HttpFetcher implements IFetcher {
 
     async fetch(uri: URL): Promise<ICommittable> {
 
-        console.debug('Fetching', uri.href);
+        console.debug('HttpFetcher.fetch() : Fetching', uri.href);
 
         // Fetch file via HTTP
         const response: Response = await fetch(uri.toString(), {

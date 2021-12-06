@@ -137,17 +137,20 @@ app.post("/memory",
 
         // Remember uri lists
         // Any post with a 'uri-list' field is 
-        if (req.body['uri-list'])
+        if (req.body['uri-list']) {
+            console.debug('POST /memory : Remembering a text/uri-list');
             remembered.push(
                 await mind.remember({
                     encodingFormat: 'text/uri-list',
                     blob: Buffer.from(req.body['uri-list'])
                 })
             );
+        }
 
         // Remember user notes
         // Any post with a 'note' field is treated as a note
-        if (req.body.note)
+        if (req.body.note) {
+            console.debug('POST /memory : Remembering a text note');
             remembered.push(
                 await mind.remember({
                     name: req.body.name, // possibly undefined
@@ -157,6 +160,7 @@ app.post("/memory",
                     encoding: 'utf8'
                 })
             );
+        }
 
         // Remember each file we get
         console.debug(`POST /memory : Trying to remember ${req.files?.length} files`)

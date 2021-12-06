@@ -37,7 +37,7 @@
     }
 
     // https://svelte.dev/repl/b17c13d4f1bb40799ccf09e0841ddd90?version=3.44.2
-    async function rememberImage() {
+    async function remember() {
         const form = new FormData();
         // form.append('image', )
         const response = await fetch("/memory", {
@@ -77,7 +77,7 @@
         </Cell>
 
         <Cell span={12}>
-            <Button on:click={rememberImage}>Remember</Button>
+            <Button on:click={remember}>Remember</Button>
         </Cell>
     </LayoutGrid>
 </form>

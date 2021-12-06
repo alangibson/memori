@@ -3,12 +3,10 @@
     import Button from "@smui/button";
     import LayoutGrid, { Cell } from "@smui/layout-grid";
 
-    let mediaRecorder: MediaRecorder;
-    const recordedChunks: Blob[] = [];
     // File input element is bound to this variable
     let input: HTMLInputElement;
-    let video: HTMLVideoElement;
-    let player: HTMLVideoElement;
+    let source: HTMLSourceElement;
+    let player: HTMLAudioElement;
 
     function onChange() {
         // Abort if there are no images
@@ -20,9 +18,9 @@
         if (file) {
             const reader = new FileReader();
             // Set image src to our new image when loading is doone
-            reader.addEventListener("load", () =>
-                video.setAttribute("src", <string>reader.result)
-            );
+            reader.addEventListener("load", () => {
+                player.src = <string>reader.result;
+            });
             // Actually read the image data
             reader.readAsDataURL(file);
         }
@@ -36,7 +34,7 @@
         if (!file) return;
 
         const form = new FormData();
-        form.append("video", file);
+        form.append("audio", file);
         const response = await fetch("/memory", {
             method: "POST",
             body: form,
@@ -51,44 +49,31 @@
         }
     }
 
-    function rememberRecording(e: Event) {
-        e.preventDefault();
+    function record() {
+        // const recordAudioButton = document.getElementById('recordAudio');
+        const pauseAudioButton = document.getElementById("pauseAudio");
+        const rememberAudioButton = document.getElementById("rememberAudio");
 
-        mediaRecorder.requestData();
-        // Trigger MediaRecorder stop event
-        mediaRecorder.stop();
-    }
-
-    function pause(e: Event) {
-        e.preventDefault();
-
-        if (mediaRecorder.state == "paused") 
-            mediaRecorder.resume();
-        else {
-            mediaRecorder.pause();
-
-            const blob = new Blob(recordedChunks, {
-                type: "videop/webm",
-            });
-
-            player.src = URL.createObjectURL(blob);
+        if (!pauseAudioButton || !rememberAudioButton) {
+            console.error(
+                "Either the pause or record button seems to be missing"
+            );
+            return;
         }
-    }
-
-    function record(e: Event) {
-        e.preventDefault();
 
         const handleSuccess = function (stream: MediaStream) {
             console.debug(`Invoking handleSuccess with stream ${stream}`);
 
             // player.srcObject = stream;
 
-            mediaRecorder = new MediaRecorder(stream, {
+            const mediaRecorder = new MediaRecorder(stream, {
                 mimeType: "audio/webm",
             });
 
             // Accumulate audio data as it comes in
-            mediaRecorder.addEventListener("dataavailable",
+            const recordedChunks: Blob[] = [];
+            mediaRecorder.addEventListener(
+                "dataavailable",
                 function (e: BlobEvent) {
                     console.debug(`Adding blob of size ${e.data.size}`);
                     if (e.data.size > 0) recordedChunks.push(e.data);
@@ -106,11 +91,30 @@
                 // Remember audio blob
                 console.log(`Remembering audio Blob of size ${blob.size}`);
                 const formData = new FormData();
-                formData.append("video", blob);
+                formData.append("audio", blob);
                 fetch("/memory", {
                     method: "POST",
                     body: formData,
                 });
+            });
+
+            // recordAudioButton.addEventListener('click', () => mediaRecorder.start());
+            rememberAudioButton.addEventListener("click", () => {
+                mediaRecorder.requestData();
+                mediaRecorder.stop();
+            });
+
+            pauseAudioButton.addEventListener("click", () => {
+                if (mediaRecorder.state == "paused") mediaRecorder.resume();
+                else {
+                    mediaRecorder.pause();
+
+                    const blob = new Blob(recordedChunks, {
+                        type: "audio/webm"
+                    });
+
+                    player.src = URL.createObjectURL(blob);
+                }
             });
 
             // Remember to call start() or MedialRecorder will be in inactive state.
@@ -120,7 +124,7 @@
         };
 
         navigator.mediaDevices
-            .getUserMedia({ audio: true, video: true })
+            .getUserMedia({ audio: true, video: false })
             .then(handleSuccess)
             .catch((error) => console.error(error));
     }
@@ -131,23 +135,21 @@
         <input
             bind:this={input}
             on:change={onChange}
-            name="video"
+            name="audio"
             type="file"
-            accept="video/*"
-            capture="environment"
+            accept="audio/*"
+            capture
         />
     </Cell>
     <Cell span={6}>
         <Button on:click={remember}>Remember</Button>
     </Cell>
     <Cell span={12}>
-        <button on:click={record}>Record</button>
-        <button on:click={pause}>Pause</button>
-        <button on:click={rememberRecording}>Remember</button>
+        <button id="recordAudio" on:click={record}>Record</button>
+        <button id="pauseAudio">Pause</button>
+        <button id="rememberAudio">Remember</button>
     </Cell>
     <Cell span={12}>
-        <video id="player" controls bind:this={player}>
-            <track kind="captions" />
-        </video>
+        <audio id="player" controls bind:this={player} />
     </Cell>
 </LayoutGrid>

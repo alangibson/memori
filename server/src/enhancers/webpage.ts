@@ -19,10 +19,10 @@ export class WebPageEnhancer implements IEnhancer {
         await page.setContent(html);
         const fullPage: Buffer = await page.screenshot({        
             type: type,              
-            fullPage: true                           
+            fullPage: true
         }) as Buffer;
-        await page.close();                           // Close the website
-        await browser.close();                        // Close the browser
+        await page.close();
+        await browser.close();
         return fullPage;
 
     }
@@ -35,7 +35,16 @@ export class WebPageEnhancer implements IEnhancer {
         }
             
         // Load html page
-        const html: string = memory._attachments[memory['@id']].data.toString('utf8');
+        let html: string = memory._attachments[memory['@id']].data.toString('utf8');
+
+        // Insert <base> tab in head if it doesnt exist
+        if (! html.match(/<base /)) {
+            // No base tag, so insert one after head
+            console.debug(`Base does not exist in ${memory.url}`);
+            html = html.replace(/<head.*?>/, `$&<base href="${memory.url.origin}" />`);
+        } else {
+            console.debug(`Base tag already exists in ${memory.url}`);
+        }
 
         // Take full screenshot
         const fullScreenshot: Buffer = await this.screenshot(html, 'webp');

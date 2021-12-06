@@ -11,6 +11,7 @@ import postcss from 'rollup-plugin-postcss';
 const production = !process.env.ROLLUP_WATCH;
 
 function serve() {
+
 	let server;
 
 	function toExit() {
@@ -19,7 +20,9 @@ function serve() {
 
 	return {
 		writeBundle() {
+	
 			if (server) return;
+	
 			server = require('child_process').spawn('npm', ['run', 'start', '--', '--dev'], {
 				stdio: ['ignore', 'inherit', 'inherit'],
 				shell: true

@@ -9,7 +9,7 @@
 
     function addNote() {
         surface.setOpen(false);
-        navigate("/note");
+        navigate("/add/note");
     }
 
     function addImage() {
@@ -17,16 +17,25 @@
         navigate("/add/image");
     }
 
-    function addAudio() {}
+    function addAudio() {
+        surface.setOpen(false);
+        navigate("/add/audio");
+    }
 
     function addVideo() {
         surface.setOpen(false);
         navigate("/add/video");
     }
 
-    function addLink() {}
+    function addLink() {
+        surface.setOpen(false);
+        navigate("/add/link");
+    }
 
-    function addFile() {}
+    function addFile() {
+        surface.setOpen(false);
+        navigate("/add/file");
+    }
 </script>
 
 <Fab

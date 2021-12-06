@@ -9,6 +9,8 @@ export class AudioEnhancer implements IEnhancer {
     private stt: SpeachToText;
 
     constructor(modelPath: string) {
+        // TODO catch error
+        // ERROR (VoskAPI:Model():model.cc:122) Folder '/home/alangibson/dev/memori/server/etc/vosk-model-en-us-0.22' does not contain model files. Make sure you specified the model path properly in Model constructor. If you are not sure about relative path, use absolute path specification.
         this.stt = new SpeachToText(modelPath);
     }
 

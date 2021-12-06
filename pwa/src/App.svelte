@@ -4,14 +4,20 @@
 	import Notices from "./Notices.svelte";
 	import { Router, Link, Route } from "svelte-routing";
 	import Home from "./Home.svelte";
-	import Note from "./Note.svelte";
+	import AddNote from "./AddNote.svelte";
 	import Create from "./Create.svelte";
 	import { AuthenticationState } from "./store";
 	import "svelte-material-ui/bare.css";
 	import ViewMemory from "./ViewMemory.svelte";
 	import ViewScreenshot from "./ViewScreenshot.svelte";
 	import AddImage from "./AddImage.svelte";
-import AddVideo from "./AddVideo.svelte";
+	import AddVideo from "./AddVideo.svelte";
+	import AddAudio from "./AddAudio.svelte";
+	import AddLink from "./AddLink.svelte";
+	import AddFile from "./AddFile.svelte";
+
+	// URL for SSR
+	export let url = "";
 
 	// Ping the server to see if we are authorized
 	async function ping() {
@@ -24,14 +30,18 @@ import AddVideo from "./AddVideo.svelte";
 </script>
 
 <main>
-	<Navbar />
-	<LogIn />
-	<Notices />
-	<Router>
+	<Router url="{url}">
+		<Navbar />
+		<LogIn />
+		<Notices />
+
 		<Route path="/"><Home /></Route>
-		<Route path="/note"><Note /></Route>
+		<Route path="/add/note"><AddNote /></Route>
 		<Route path="/add/image"><AddImage /></Route>
 		<Route path="/add/video"><AddVideo /></Route>
+		<Route path="/add/audio"><AddAudio /></Route>
+		<Route path="/add/link"><AddLink /></Route>
+		<Route path="/add/file"><AddFile /></Route>
 		<Route path="/view/memory"><ViewMemory /></Route>
 		<Route path="/view/memory/screenshot"><ViewScreenshot /></Route>
 	</Router>
