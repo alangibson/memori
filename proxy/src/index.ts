@@ -1,11 +1,11 @@
-import proc from 'child_process';
-import { NginxBinary } from 'nginx-binaries'
+import debug from 'debug';
 import http from 'http';
 import { Command, Option } from 'commander';
 import localtunnel from 'localtunnel';
-// import proxy from 'express-http-proxy';
-import express from 'express';
 import httpProxy from 'http-proxy';
+
+debug.enable('proxy');
+const log = debug('proxy');
 
 // Parse command line args
 const program = new Command()
@@ -19,27 +19,18 @@ const program = new Command()
         'http://localhost:35729')
     .option('-b, --bind <ip4>', 'IP address to bind to', '0.0.0.0')
     .option('-t, --tunnel-host <hostname>', 'Hostname of tunnel server',
-        'https://my.memori.link')
-    .option('-n, --tunnel-hame <name>', 'Submomain name of tunnel', 'memori')
+        'my.memori.link')
+    .option('-n, --tunnel-name <name>', 'Submomain name of tunnel', 'memori')
     .parse(process.argv);
 const argv = program.opts();
 
-
-// Start nginx server
-// const dl = await NginxBinary.download({ version: '1.21.4' });
-// const nginx = proc.spawn(dl, ['-c', 'nginx.conf'], {
-//     stdio: ['ignore', 'inherit', 'inherit'],
-//     shell: true
-// });
-// function toExit() {
-//     if (nginx) nginx.kill(0);
-// }
-// process.on('SIGTERM', toExit);
-// process.on('exit', toExit);
-
-
-
 const proxy = httpProxy.createProxyServer({});
+
+proxy.on('error', (error) => {
+    log('Unexpected error while proxying', error);
+});
+
+// For livereload server
 const wsProxy = httpProxy.createProxyServer({
     ws: true,
     target: {
@@ -47,43 +38,53 @@ const wsProxy = httpProxy.createProxyServer({
         port: 35729
     }
 });
+
 const proxyServer = http.createServer((req, res) => {
-    console.log(`${req.method} ${req.url}`);
-    if (req.url == '/livereload')
-        proxy.web(req, res, { target: argv.livereload });
-    else if (req.url?.startsWith('/livereload.js') || req.url?.startsWith('/connect'))
-        proxy.web(req, res, { target: argv.livereload });
-    else if (req.url?.startsWith('/memory') 
-          || req.url?.startsWith('/authorization')
-          || req.url?.startsWith('/mind')
-          || req.url?.startsWith('/ping'))
-        proxy.web(req, res, { target: argv.server });
-    else
-        // Send everything else to PWA
-        proxy.web(req, res, { target: argv.pwa });
+    try {
+        if (req.url == '/livereload')
+            proxy.web(req, res, { target: argv.livereload });
+        else if (req.url?.startsWith('/livereload.js') || req.url?.startsWith('/connect'))
+            proxy.web(req, res, { target: argv.livereload });
+        else if (req.url?.startsWith('/memory')
+            || req.url?.startsWith('/authorization')
+            || req.url?.startsWith('/mind')
+            || req.url?.startsWith('/ping'))
+            proxy.web(req, res, { target: argv.server });
+        else
+            // Send everything else to PWA
+            proxy.web(req, res, { target: argv.pwa });
+    } catch (e) {
+        log('Caught unexpected error while proxying request', e);
+    }
 })
+
 // Listen to the `upgrade` event and proxy the
 // WebSocket requests as well.
 proxyServer.on('upgrade', function (req, socket, head) {
-    console.log(`UPGRADE ${req.url}`);
+    log(`Upgrading to WebSocket : ${req.url}`);
     wsProxy.ws(req, socket, head);
 });
-proxyServer.listen(argv.port);
+
+proxyServer.on('error', (error) => log('Unexpected error', error));
+
+proxyServer.on('listening', () => log(`Proxy listening on ${argv.bind}:${argv.port}`));
+
+log(`Starting proxy on local ${argv.bind}:${argv.port}`);
+proxyServer.listen(argv.port, argv.bind);
 
 // Open tunnel
 
-console.info('Opening tunnel to this server');
+log(`Opening tunnel ${argv.tunnelName}.${argv.tunnelHost} to local port ${argv.port}`);
 const tunnel = await localtunnel({
     port: argv.port,
     subdomain: argv.tunnelName,
-    host: argv.tunnelHost
-});
-console.info(`Connect via secure tunnel at ${tunnel.url}`);
-
-tunnel.on('close', () => {
-    console.info(`Shutting down tunnel ${tunnel.url}`);
+    host: `https://${argv.tunnelHost}`
 });
 
-// app.listen(argv.port, () => {
-//     console.info(`Proxy server started on port ${argv.port}`);
-// });
+tunnel.on('url', (url) => log(`Opened tunnel at ${url}`));
+
+tunnel.on('error', (error) => log('Unexpected error in tunnel', error));
+
+tunnel.on('close', () => log(`Shutting down tunnel ${tunnel.url}`));
+
+tunnel.on('request', (request) => log(`Tunnel request : ${request.method} ${request.path}`));

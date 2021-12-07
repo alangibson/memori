@@ -5,11 +5,12 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts"
+    "start": "node --loader ts-node/esm --no-warnings src/index.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/debug": "^4.1.7",
     "@types/express": "^4.17.13",
     "@types/express-http-proxy": "^1.6.3",
     "@types/http-proxy": "^1.17.7",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "commander": "^8.3.0",
+    "debug": "^4.3.3",
     "express": "^4.17.1",
     "express-http-proxy": "^1.6.3",
     "http-proxy": "^1.18.1",
