@@ -74,6 +74,7 @@ export class Mind implements IPersistable {
     }
 
     public async fetch(uri: URL): Promise<ICommittable> {
+        console.debug(`Mind.fetch() : Fetching uri: ${uri}`);
        return await new Fetcher().fetch(uri);
     }
 

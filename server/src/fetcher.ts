@@ -61,12 +61,10 @@ export class HttpFetcher implements IFetcher {
         });
 
         // Make sure we have a mime type without encoding info
-        // @ts-ignore because we do a null check immediately after
-        let mimeType: RememberableType = response.headers.get('Content-Type');
-        if (mimeType == null)
+        let mimeType: string|null = response.headers.get('Content-Type');
+        if (! mimeType)
             throw new Error(`Could not determine mime type for : ${uri}`);
         else
-            // @ts-ignore because it doesn't matter if it's not a RememberableType
             mimeType = mimeType.split(';')[0];
 
         return {

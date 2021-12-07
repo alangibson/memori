@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { URL } from 'url';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import multer from 'multer';
 import { IRecalledMemory, Mind } from '../index';
 import passport from 'passport';
@@ -9,6 +9,7 @@ import CookieStrategy from 'passport-cookie';
 import cookieParser from 'cookie-parser';
 import { IMemory, IRememberable } from '../models'
 import { AccessRule, Config } from '../configuration';
+import { request } from 'http';
 
 // Build Express server and middleware
 const app = express();
@@ -59,30 +60,57 @@ function extractUrlsFromText(text: string): URL[] {
         );
 }
 
-function parseRememberableFromText(text: string): IRememberable {
+function parseRememberableFromText(text: string): IRememberable[] {
 
-    // TODO what if there are > 1 urls. Possible data loss!
+    if (!text)
+        return [];
 
     const urlsFromText: URL[] = extractUrlsFromText(text);
+
     if (urlsFromText.length)
-        return {
-            encodingFormat: 'text/uri-list',
-            blob: Buffer.from(urlsFromText[0].toString()),
-            url: urlsFromText[0]
-        }
+        return [
+            {
+                encodingFormat: 'text/uri-list',
+                blob: Buffer.from(text)
+            }
+        ];
     else
         // otherwise, mimeType = text/plain
-        return {
+        return [{
             encodingFormat: 'text/plain',
             blob: Buffer.from(text)
-        }
+        }];
 }
 
-app.post('/memory/share',
+async function parseFiles(req: Request): Promise<IRememberable[]> {
+    return await Promise.all(
+        (<any[]>req.files)?.map(async (file: any): Promise<IRememberable> => {
+            return {
+                encodingFormat: file.mimetype,
+                blob: file.buffer,
+                // FIXME location will cause colliding @ids when > 1 file
+                url: req.body.url,
+                name: file.originalname,
+                encoding: file.encoding
+            }
+        })
+    );
+}
+
+async function rememberAll(mind: Mind, rememberables: IRememberable[]): Promise<IMemory[]> {
+    console.log(`rememberAll() : Remembering ${rememberables.length} IRememberables`);
+    return await Promise.all(
+        rememberables.map(async (rememberable) =>
+            await mind.remember(rememberable)
+        ));
+}
+
+// Target for WebShare API call
+app.post('/memory/webshare',
     passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
 
-        console.log('/memory/share', req);
+        console.log('POST /memory/webshare');
 
         // Get org and mind via tokens structure
         // Casting to AccessRule because we should return Unauthorized if no access
@@ -92,22 +120,22 @@ app.post('/memory/share',
         const mind: Mind = await config.newMind(authorization);
         await mind.load();
 
-        // PWA as Web Share Target can receieve basically anything in text field
-        const rememberable = parseRememberableFromText(req.body.text);
+        // Accumulated new memories
+        let memories: IMemory[] = [];
 
-        console.log('parseRememberableFromText', rememberable);
+        // Parse files (images, etc)
+        memories = memories.concat(await rememberAll(mind, await parseFiles(req)));
 
-        if (rememberable) {
-            const thing: IMemory = await mind.remember(rememberable);
+        // Parse IRememberables from text
+        memories = memories.concat(await rememberAll(mind, parseRememberableFromText(req.body.text)));
 
-            // Save Mind state
-            await mind.save();
+        // Save Mind state
+        await mind.save();
 
+        if (memories.length) {
             // Respond to requet with 303 See Other. Typical for PWAs
             return res.status(303)
-                .setHeader('Location',
-                    // @ts-ignore
-                    `/memory?@id=${thing['@id']}`)
+                .setHeader('Location', `/memory`)
                 .end();
         } else {
             return res.status(400)
@@ -164,21 +192,27 @@ app.post("/memory",
 
         // Remember each file we get
         console.debug(`POST /memory : Trying to remember ${req.files?.length} files`)
-        const rememberedFiles: IMemory[] = await Promise.all(
-            (<any[]>req.files)?.map(async (file: any): Promise<IMemory> => {
 
-                console.debug(`POST /memory : Field name=${file.fieldname}, original name=${file.originalname}, mime type=${file.mimetype},encoding=${file.encoding}, size=${file.size}`);
+        const rememberableFiles: IRememberable[] = await parseFiles(req);
+        const rememberedFiles: IMemory[] = await rememberAll(mind, rememberableFiles);
 
-                return mind.remember({
-                    encodingFormat: file.mimetype,
-                    blob: file.buffer,
-                    // FIXME location will cause colliding @ids when > 1 file
-                    url: req.body.url,
-                    name: file.originalname,
-                    encoding: file.encoding
-                });
-            })
-        );
+        // const rememberedFiles: IMemory[] = await Promise.all(
+        //     (<any[]>req.files)?.map(async (file: any): Promise<IMemory> => {
+
+        //         console.debug(`POST /memory : Field name=${file.fieldname}, original name=${file.originalname}, mime type=${file.mimetype},encoding=${file.encoding}, size=${file.size}`);
+
+        //         return mind.remember({
+        //             encodingFormat: file.mimetype,
+        //             blob: file.buffer,
+        //             // FIXME location will cause colliding @ids when > 1 file
+        //             url: req.body.url,
+        //             name: file.originalname,
+        //             encoding: file.encoding
+        //         });
+        //     })
+        // );
+
+
         remembered = remembered.concat(rememberedFiles);
         console.log(`POST /memory : Remembered ${remembered.length} Memories`);
 
@@ -340,7 +374,7 @@ app.delete('/memory',
     });
 
 app.post("/mind", async (req, res) => {
-    
+
     console.debug(`POST /mind`);
 
     const config: Config = Config.getInstance();
@@ -373,7 +407,7 @@ app.get('/authorization',
     async (req, res) => {
 
         // See if token is good
-        const token: string|undefined = req.query.token?.toString();
+        const token: string | undefined = req.query.token?.toString();
 
         if (!token)
             return res.sendStatus(400);
@@ -381,9 +415,9 @@ app.get('/authorization',
         const config: Config = Config.getInstance();
         const access = await config.getAuthorizationByToken(token);
         console.debug(`GET /authorization : Found access for token ${token}`, access);
-        if (! access)
+        if (!access)
             return res.sendStatus(401);
-        
+
         res.status(204)
             .setHeader('Set-Cookie', `Authorization=${token}; Max-Age>=0; path=/; HttpOnly; SameSite=Lax`)
             // .setHeader('Location', '/')
@@ -403,10 +437,10 @@ app.delete('/authorization',
 app.get('/ping', passport.authenticate(['bearer', 'cookie'], { session: false }),
     async (req, res) => {
         const authorization: AccessRule = <AccessRule>req.user;
-        if (! authorization)
+        if (!authorization)
             return res.sendStatus(401);
         else
-        return res.sendStatus(204);
+            return res.sendStatus(204);
     });
 
 export default app;

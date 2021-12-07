@@ -4,8 +4,8 @@
     "version": "0.1",
     "description": "Never Forget",
     "icons": {
-        "48": "icons/memori-48.png",
-        "96": "icons/memori-96.png"
+        "48": "icons/icon-black-48x48.png",
+        "96": "icons/icon-black-96x96.png"
     },
     "permissions": [
         "tabs",
@@ -17,7 +17,7 @@
         "https://*/*"
     ],
     "browser_action": {
-        "default_icon": "icons/memori-32.png",
+        "default_icon": "icons/icon-black-32x32.png",
         "default_title": "Remember with Memori"
     },
     "background": {

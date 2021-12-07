@@ -4,9 +4,12 @@
   "description": "Memori Browser Extension",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "package": "rm -fr ./dist && mkdir ./dist && zip -r ./dist/memori-browser-extension-latest.zip *"
+    "build": "rm -fr ./public/extension/build && mkdir -p ./public/extension/build && zip -x node_modules/**/\\* -r ./public/extension/build/memori-browser-extension-latest.zip *",
+    "start": "sirv public --no-clear --port 4324 --dev"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "sirv-cli": "^1.0.14"
+  }
 }

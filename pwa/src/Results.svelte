@@ -16,8 +16,6 @@
     preload();
 </script>
 
-<div>
-    {#each $SearchResults as result}
-        <Result memory={result.thing} />
-    {/each}
-</div>
+{#each $SearchResults as result}
+    <Result memory={result.thing} />
+{/each}

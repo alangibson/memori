@@ -10,7 +10,7 @@
     "cli": "node --loader ts-node/esm --experimental-specifier-resolution=node src/cli.ts",
     "check": "tsc",
     "build": "npm run check && babel ./src --out-dir ./build  --extensions '.ts,.js' --copy-files",
-    "start": "node --max_old_space_size=8000 --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/server/cluster.ts",
+    "start": "node --max_old_space_size=4096 --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings src/server/cluster.ts",
     "package": "pkg . --out-path ./dist --targets node16-linux-x64,node16-macos-x64,node16-win-x64",
     "node": "node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings"
   },

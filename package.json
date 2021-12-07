@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "pm2 start pm2.config.js --no-daemon"
   },
   "repository": {
     "type": "git",
@@ -14,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/alangibson/memori/issues"
   },
-  "homepage": "https://github.com/alangibson/memori#readme"
+  "homepage": "https://github.com/alangibson/memori#readme",
+  "dependencies": {
+    "pm2": "^5.1.2"
+  }
 }

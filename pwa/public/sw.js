@@ -1,13 +1,10 @@
 
-const TOKEN = 'lksadjf8474jfjf7474keld94i';
-const SHARE_URL = 'https://ef77-91-113-85-122.ngrok.io/memory/share';
 const cacheName = 'memori';
 
 // Files to cache
 const contentToCache = [
-    '/pwa/index.html',
-    '/pwa/app.js',
-    '/pwa/style.css',
+    '/index.html',
+    '/build/bundle.js',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
 ];
@@ -16,58 +13,57 @@ const contentToCache = [
 self.addEventListener('install', (e) => {
     console.info('[Memori] Installing Service Worker');
     e.waitUntil((async () => {
-        const cache = await caches.open(cacheName);
-        console.log('[Memori] Caching all: app shell and content');
-        await cache.addAll(contentToCache);
+        // TODO cache
+        // console.log('[Memori] Caching all: app shell and content');
+        // const cache = await caches.open(cacheName);
+        // await cache.addAll(contentToCache);
     })());
 });
 
+function isShareEvent(fetchEvent) {
+    return ( fetchEvent.request.method == 'POST' 
+        && new URL(fetchEvent.request.url).pathname.endsWith('/memory/webshare') )
+}
+
 // Fetching content using Service Worker
 // https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent
-self.addEventListener('fetch', (e) => {
+self.addEventListener('fetch', (fetchEvent) => {
 
-    // // If this is an incoming POST request for the registered "action" URL, respond to it.
+    // If this is an incoming POST request for the registered "action" URL, respond to it.
     // https://developer.mozilla.org/en-US/docs/Web/API/Request
-    if (e.request.method == 'POST' && new URL(e.request.url).pathname.endsWith('/pwa/memory/share')) {
+    if (isShareEvent(fetchEvent)) {
 
-        e.respondWith((async () => {
+        // Calls to /memory/webshare can take a long time since they do
+        // things call download web pages.
 
-            // Create headers necessary to call Memori server
-            const h = new Headers();
-            h.append('Authorization', `Bearer ${TOKEN}`)
+        // Background POST /memory/webshare
+        fetch('/memory/webshare', {
+            method: 'POST',
+            body: await fetchEvent.request.formData(),
+            mode: "same-origin",
+            credentials: "same-origin"
+        });
 
-            // Remember resource on Memori server
-            const formData = await e.request.formData();
-            const response = await fetch(SHARE_URL, {
-                method: 'POST',
-                body: formData,
-                headers: h,
-                mode: "same-origin"
-            });
-
-            // GET the newly created memory url
-            const thingResponse = await fetch(response.url, {
-                headers: h
-            });
-
-            // TODO Cache Memori response
-            // const cache = await caches.open(cacheName);
-            // cache.put(e.request, thingResponse.clone());
-
-            return thingResponse;
+        // Immediately render 'share in progress' page in PWA
+        fetchEvent.respondWith((async () => {
+            return await fetch('/webshare');
         })());
 
-        // otherwise just cache it
+    // otherwise just cache it
     } else {
-        e.respondWith((async () => {
-            const r = await caches.match(e.request);
-            console.log(`[Memori] Service Worker fetching resource: ${e.request.url}`);
+
+        fetchEvent.respondWith((async () => {
+            const r = await caches.match(fetchEvent.request);
+            console.log(`[Memori] Service Worker fetching resource: ${fetchEvent.request.url}`);
             if (r)
                 return r;
-            const response = await fetch(e.request);
-            const cache = await caches.open(cacheName);
-            console.log(`[Memroi] Service Worker caching new resource: ${e.request.url}`);
-            cache.put(e.request, response.clone());
+            const response = await fetch(fetchEvent.request);
+
+            // TODO cache
+            // console.log(`[Memroi] Service Worker caching new resource: ${e.request.url}`);
+            // const cache = await caches.open(cacheName);
+            // cache.put(e.request, response.clone());
+
             return response;
         })());
     }
@@ -78,9 +74,14 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('activate', (e) => {
     e.waitUntil(caches.keys().then((keyList) => {
         return Promise.all(keyList.map((key) => {
+
             if (key === cacheName)
                 return;
-            return caches.delete(key);
+
+            // TODO cache
+            // return caches.delete(key);
+            return true;
+
         }))
     }));
 });

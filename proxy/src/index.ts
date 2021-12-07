@@ -15,12 +15,14 @@ const program = new Command()
         'http://localhost:4322')
     .option('--pwa <hostname:port>', 'Location of PWA',
         'http://localhost:4323')
+    .option('--extension <hostname:port>', 'Location of browser extension server',
+        'http://localhost:4324')
     .option('--livereload <hostname:port>', 'Location of Livereload',
         'http://localhost:35729')
     .option('-b, --bind <ip4>', 'IP address to bind to', '0.0.0.0')
     .option('-t, --tunnel-host <hostname>', 'Hostname of tunnel server',
         'my.memori.link')
-    .option('-n, --tunnel-name <name>', 'Submomain name of tunnel', 'memori')
+    .option('-n, --tunnel-name <name>', 'Submomain name of tunnel')
     .parse(process.argv);
 const argv = program.opts();
 
@@ -43,6 +45,8 @@ const proxyServer = http.createServer((req, res) => {
     try {
         if (req.url == '/livereload')
             proxy.web(req, res, { target: argv.livereload });
+        else if (req.url?.startsWith('/extension'))
+            proxy.web(req, res, { target: argv.extension });
         else if (req.url?.startsWith('/livereload.js') || req.url?.startsWith('/connect'))
             proxy.web(req, res, { target: argv.livereload });
         else if (req.url?.startsWith('/memory')

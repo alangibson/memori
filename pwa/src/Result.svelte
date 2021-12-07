@@ -63,18 +63,22 @@
 
 <Card variant="outlined">
     <LayoutGrid>
-        <Cell spanDevices={{ desktop: 3, tablet: 2 }}>
-            <Image
-                on:click={viewScreenshot}
-                src="/memory/attachment?@id={memory[
-                    '@id'
-                ]}&attachment=thumbnail"
-                alt="Thumbnail"
-                on:error={defaultImage}
-            />
+        <Cell spanDevices={{desktop: 2, phone: 4}}>
+            {#each [memory, ...memory["m:embedded"]] as schema}
+                <div style={active != schema["@type"] ? "display: none" : ""}>
+                    <Image
+                        on:click={viewScreenshot}
+                        src="/memory/attachment?@id={schema[
+                            '@id'
+                        ]}&attachment=thumbnail"
+                        alt="Thumbnail"
+                        on:error={defaultImage}
+                    />
+                </div>
+            {/each}
         </Cell>
 
-        <Cell spanDevices={{ desktop: 9, tablet: 5 }}>
+        <Cell spanDevices={{desktop: 10, phone: 4}}>
             <TabBar tabs={tabNames()} let:tab bind:active>
                 <Tab {tab} minWidth>
                     <Label>{tab}</Label>
@@ -82,66 +86,57 @@
             </TabBar>
 
             {#each [memory, ...memory["m:embedded"]] as schema}
-            <div style={active != schema["@type"] ? "display: none" : ""}>
-                <InnerGrid >
-                    <Cell span={8}>
-                        <Content>
-                            <h4>
-                                <a href={url()}>{schema.name}</a>
-                            </h4>
-                            <div>{schema.abstract}</div>
-                            <h5>{schema["@type"]} / {schema.encodingFormat}</h5>
-                        </Content>
-                    </Cell>
-                    <Cell>
-                        <Group class="memory-actions">
-                            <Button variant="outlined">
-                                <a
-                                    href="/memory/attachment?@id={schema[
-                                        '@id'
-                                    ]}&attachment={schema['@id']}"
+                {#if active == schema["@type"]}
+                    <!-- style={active != schema["@type"] ? "display: none" : ""} -->
+                    <InnerGrid>
+                        <Cell spanDevices={{desktop: 8, phone: 4}}>
+                            <Content style="overflow-wrap: break-word;">
+                                <h4>
+                                    <a href={url()}>{schema.name}</a>
+                                </h4>
+                                <div>
+                                    {schema.abstract}
+                                </div>
+                                <h5>
+                                    {schema["@type"]} / {schema.encodingFormat}
+                                </h5>
+                            </Content>
+                        </Cell>
+                        <Cell spanDevices={{desktop: 4, phone: 4}}>
+                            <Group class="memory-actions">
+                                <Button variant="outlined">
+                                    <a
+                                        href="/memory/attachment?@id={schema[
+                                            '@id'
+                                        ]}&attachment={schema['@id']}"
+                                    >
+                                        <Icon class="material-icons"
+                                            >download</Icon
+                                        >
+                                        <Label>Download</Label>
+                                    </a>
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    on:click={forgetMemory}
                                 >
-                                    <Icon class="material-icons">download</Icon>
-                                    <Label>Download</Label>
-                                </a>
-                            </Button>
-                            <Button variant="outlined" on:click={forgetMemory}>
-                                <Icon class="material-icons">delete</Icon>
-                                <Label>Forget</Label>
-                            </Button>
-                            <Button variant="outlined" on:click={viewMemory}>
-                                <Icon class="material-icons">read_more</Icon>
-                                <Label>More</Label>
-                            </Button>
-                        </Group>
-                    </Cell>
-                </InnerGrid>
-            </div>
+                                    <Icon class="material-icons">delete</Icon>
+                                    <Label>Forget</Label>
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    on:click={viewMemory}
+                                >
+                                    <Icon class="material-icons">read_more</Icon
+                                    >
+                                    <Label>More</Label>
+                                </Button>
+                            </Group>
+                        </Cell>
+                    </InnerGrid>
+                {/if}
             {/each}
         </Cell>
-
-        <!-- <Cell spanDevices={{ desktop: 3 }}>
-            <Group class="memory-actions">
-                <Button variant="outlined">
-                    <a
-                        href="/memory/attachment?@id={memory[
-                            '@id'
-                        ]}&attachment={memory['@id']}"
-                    >
-                        <Icon class="material-icons">download</Icon>
-                        <Label>Download</Label>
-                    </a>
-                </Button>
-                <Button variant="outlined" on:click={forgetMemory}>
-                    <Icon class="material-icons">delete</Icon>
-                    <Label>Forget</Label>
-                </Button>
-                <Button variant="outlined" on:click={viewMemory}>
-                    <Icon class="material-icons">read_more</Icon>
-                    <Label>More</Label>
-                </Button>
-            </Group>
-        </Cell> -->
     </LayoutGrid>
 </Card>
 
