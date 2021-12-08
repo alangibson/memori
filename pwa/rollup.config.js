@@ -7,6 +7,9 @@ import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
 import postcss from 'rollup-plugin-postcss';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -44,6 +47,16 @@ export default {
 	},
 	plugins: [
 
+		// If you have external dependencies installed from
+		// npm, you'll most likely need these plugins. In
+		// some cases you'll need additional configuration -
+		// consult the documentation for details:
+		// https://github.com/rollup/plugins/tree/master/packages/commonjs
+		resolve({
+			browser: true,
+			dedupe: ['svelte']
+		}),
+
 		svelte({
 			preprocess: sveltePreprocess({ sourceMap: !production }),
 			compilerOptions: {
@@ -62,14 +75,6 @@ export default {
 			),
 			emitCss: true
 		}),
-
-		// Typescript support
-		// typescript(
-		// 	{ sourceMap: !production }
-		// ),
-		// ts({
-		// 	typescript
-		// }),
 
 		// we'll extract any component CSS out into
 		// a separate file - better for performance
@@ -90,22 +95,14 @@ export default {
 			]
 		}),
 
-		// If you have external dependencies installed from
-		// npm, you'll most likely need these plugins. In
-		// some cases you'll need additional configuration -
-		// consult the documentation for details:
-		// https://github.com/rollup/plugins/tree/master/packages/commonjs
-		resolve({
-			browser: true,
-			dedupe: ['svelte']
-		}),
-
-		commonjs(),
-
 		typescript({
 			sourceMap: !production,
 			inlineSources: !production
 		}),
+
+
+		commonjs(),
+
 
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
