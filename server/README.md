@@ -35,6 +35,7 @@ npm run start:test
 ### Run local server on Windows
 
 ```
+Install .NET Framework 3.5 https://www.microsoft.com/en-us/download/details.aspx?id=21
 Install CouchDB from https://couchdb.apache.org/#download
 
 Install git from https://git-scm.com/download/win
