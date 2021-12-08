@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "rollup -c",
-    "dev": "PORT=4323 rollup -c -w",
+    "dev": "rollup -c -w",
     "start": "sirv public --no-clear --single --port 4323 --dev",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
@@ -16,6 +16,7 @@
     "@smui/top-app-bar": "^6.0.0-beta.4",
     "@tsconfig/svelte": "^2.0.0",
     "bulma": "^0.9.3",
+    "dotenv": "^10.0.0",
     "node-sass": "^6.0.1",
     "postcss": "^8.4.4",
     "rollup": "^2.3.4",
