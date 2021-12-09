@@ -1,8 +1,9 @@
 {
-  "name": "svelte-app",
+  "name": "pwa",
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "clean": "rm -fr ./public/build",
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear --single --port 4323 --dev",

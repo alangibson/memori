@@ -1,0 +1,16 @@
+{
+  "name": "lib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.7"
+  }
+}

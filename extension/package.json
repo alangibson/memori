@@ -4,7 +4,8 @@
   "description": "Memori Browser Extension",
   "main": "index.js",
   "scripts": {
-    "build": "rm -fr ./public/extension/build && mkdir -p ./public/extension/build && zip -x node_modules/**/\\* -r ./public/extension/build/memori-browser-extension-latest.zip *",
+    "clean": "rm -fr ./public/extension/build",
+    "build": "mkdir -p ./public/extension/build && zip -x node_modules/**/\\* -r ./public/extension/build/memori-browser-extension-latest.zip *",
     "start": "sirv public --no-clear --port 4324 --dev"
   },
   "author": "",
