@@ -1,0 +1,6 @@
+memory/
+main/
+store/
+etc/vosk-*
+etc/security.json
+build

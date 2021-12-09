@@ -1,13 +1,3 @@
 node_modules
-server/memory/
-server/main/
-*.traineddata
-security.json
-package-lock.json
-ngrok
-dist/
-vosk*
-dump
-server/store
-server/build
 *.log
+build
