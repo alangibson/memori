@@ -1,0 +1,50 @@
+{
+  "name": "@memori/pwa",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf ./public/build",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "sirv public --no-clear --single --port 4323 --dev",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@rollup/plugin-typescript": "^8.0.0",
+    "@smui/button": "^6.0.0-beta.4",
+    "@smui/top-app-bar": "^6.0.0-beta.4",
+    "@tsconfig/svelte": "^2.0.0",
+    "bulma": "^0.9.3",
+    "dotenv": "^10.0.0",
+    "node-sass": "^6.0.1",
+    "postcss": "^8.4.4",
+    "rollup": "^2.3.4",
+    "rollup-plugin-css-only": "^3.1.0",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-svelte": "^7.0.0",
+    "rollup-plugin-terser": "^7.0.0",
+    "sass": "^1.44.0",
+    "svelte": "^3.0.0",
+    "svelte-check": "^2.0.0",
+    "svelte-preprocess": "^4.0.0",
+    "tslib": "^2.0.0",
+    "typescript": "^4.0.0"
+  },
+  "dependencies": {
+    "@dicebear/avatars": "^4.10.1",
+    "@dicebear/avatars-identicon-sprites": "^4.10.1",
+    "@dicebear/avatars-jdenticon-sprites": "^4.10.1",
+    "@vime/core": "^5.3.0",
+    "@vime/svelte": "^5.3.0",
+    "generate-avatar": "^1.4.10",
+    "jdenticon": "^3.1.1",
+    "material-icons": "^1.10.3",
+    "sirv-cli": "^1.0.0",
+    "svelte-material-ui": "^6.0.0-beta.4",
+    "svelte-routing": "^1.6.0",
+    "zlib": "^1.0.5"
+  }
+}

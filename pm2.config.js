@@ -1,57 +1,43 @@
-const path = require('path');
-const path_NODEJS = process.env.Path.split(';').filter( f => f.includes('nodejs') )[0];
-// console.log(path_NODEJS);
-// const path_NPM = path.join( path_NODEJS, 'node_modules', 'npm', 'bin', 'npm-cli.js');
-const path_NPM = './pm2-node.js'
+// const npm = 'npm';
+const npm = './pm2-npm.js';
 
 module.exports = {
     apps: [
         {
             name: 'proxy',
-            cwd: './proxy',
-            script: path_NPM,
+            cwd: './packages/proxy',
+            script: npm,
             args: 'start -- -n test',
-            // watch: ['proxy'],
-            // watch: true,
-            // env: {
-            //     NODE_ENV: 'development',
-            // },
-            source_map_support: true,
-            // interpreter: 'none'
+            watch: ['packages/proxy'],
+            watch: true,
+            source_map_support: true
         },
         {
             name: 'server',
-            cwd: './server',
-            script: path_NPM,
+            cwd: './packages/server',
+            script: npm,
             args: 'start',
-            // watch: ['server'],
-            // watch: true,
-            // env: {
-            //     NODE_ENV: 'development',
-            // },
-            source_map_support: true,
-            // interpreter: 'none'
+            watch: false,
+            env: {
+                // shut Tensorflow up
+                TF_CPP_MIN_LOG_LEVEL: '2'
+            },
+            source_map_support: true
         },
         {
             name: 'pwa',
-            cwd: './pwa',
-            // script: 'npm run start',
-            script: path_NPM,
+            cwd: './packages/pwa',
+            script: npm,
             args: 'run dev',
-            // watch: ['server'],
-            // watch: true,
-            // env: {
-            //     NODE_ENV: 'development',
-            // },
-            source_map_support: true,
-            // interpreter: 'none'
+            // Rollup watches the directory for us in dev mode
+            watch: false,
+            source_map_support: true
         },
         {
             name: 'extension',
-            cwd: './extension',
-            script: path_NPM,
-            args: 'start',
-            // interpreter: 'none'
+            cwd: './packages/extension',
+            script: npm,
+            args: 'start'
         }
     ]
 };

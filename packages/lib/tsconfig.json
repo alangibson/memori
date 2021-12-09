@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        // "outDir": "dist",
+        "target": "es2017",
+        "lib": [
+            "es2020",
+            "DOM"
+        ],
+        "module": "esnext", // (A)
+        "moduleResolution": "node", // (B)
+        "strict": true,
+        "sourceMap": true,
+        "rootDir": "src",
+        "composite": true,
+        // Needed for CommonJS modules
+        "allowSyntheticDefaultImports": true, // (C)
+        // https://stackoverflow.com/questions/62096269/cant-run-my-node-js-typescript-project-typeerror-err-unknown-file-extension
+        "esModuleInterop": true,
+        "allowJs": true,
+        "resolveJsonModule": true,
+        // Ensure that Babel can safely transpile files in the TypeScript project
+        "isolatedModules": true,
+        "baseUrl": ".",
+        "outDir": "./build/",
+        // Don't check node_modules
+        "skipLibCheck": true,
+        // Ensure that .d.ts files are created by tsc, but not .js files
+        "declaration": true,
+        // "emitDeclarationOnly": true,
+        // "listFiles": true
+    },
+    "include": [
+        "./src"
+    ],
+    // "exclude": [
+    //     "./node_modules"
+    // ]
+}

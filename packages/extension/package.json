@@ -1,0 +1,16 @@
+{
+  "name": "@memori/extension",
+  "version": "0.0.1",
+  "description": "Memori Browser Extension",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rimraf ./public/extension/build",
+    "build": "mkdir -p ./public/extension/build && zip -x node_modules/**/\\* -r ./public/extension/build/memori-browser-extension-latest.zip *",
+    "start": "sirv public --no-clear --port 4324 --dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "sirv-cli": "^1.0.14"
+  }
+}

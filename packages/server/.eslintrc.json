@@ -1,0 +1,26 @@
+{
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "airbnb"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint"
+    ],
+    "rules": {
+        "indent": ["error", 4],
+        "max-len": ["error", { "code": 80 }],
+        "comma-dangle": "off",
+        "max-classes-per-file": "off",
+        "curly": ["error", "multi"],
+        // "curly": ["error", "all"],
+        "nonblock-statement-body-position": ["error", "below"],
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/max-classes-per-file": "off",
+        "@typescript-eslint/ban-ts-comment": ["error", {
+            "ts-ignore": "allow-with-description"
+        }]
+    }
+}

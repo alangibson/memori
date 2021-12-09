@@ -4,8 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start pm2.config.js --no-daemon"
+    "start": "pm2 start pm2.config.js --no-daemon",
+    "stop": "pm2 stop pm2.config.js",
+    "pm2": "pm2"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alangibson/memori.git"

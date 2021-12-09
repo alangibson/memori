@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "ES2020",
+    "strict": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    // "importHelpers": true,
+    // "lib": [ "es2015", "dom" ],
+    "types": [
+      "node",
+      "svelte"
+    ],
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "skipLibCheck": true,
+    // "rootDir": "src"
+    // "esModuleInterop": true,
+    // "allowSyntheticDefaultImports": true,
+  },
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "include": [
+    "src/**/*",
+    "src/node_modules"
+  ],
+  "exclude": [
+    "./node_modules/*",
+    "__sapper__/*",
+    "public/*"
+  ],
+}
