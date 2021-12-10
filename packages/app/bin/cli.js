@@ -11,12 +11,17 @@ const { execSync } = require('child_process');
 const [ingore, ignore2, ...args] = process.argv;
 const command = args.shift();
 
-const binPath = path.resolve(__dirname + '/../node_modules/.bin');
 const configPath = path.resolve(__dirname + '/../');
+
+// Works in local dev install (ie git checkout)
+// const binPath = path.resolve(__dirname + '/../node_modules/.bin');
+// const pm2 = `${binPath}/pm2`;
+// Works under `npm exec`
+const pm2 = 'pm2';
 
 // windowsHide option will hide the cmd window
 execSync(
-    `${binPath}/pm2 ${command} ${configPath}/pm2.config.js ${args.join(' ')}`,
+    `"${pm2}" ${command} "${configPath}/pm2.config.js" ${args.join(' ')}`,
     {
         windowsHide: true,
         stdio: 'inherit'

@@ -11,7 +11,7 @@ const [ingore, ignore2, ...args] = process.argv;
 const pwd = process.env.PACKAGE_DIR || '.';
 
 // windowsHide option will hide the cmd window
-execSync(`cd ${pwd} && npm ${args.join(' ')}`, {
+execSync(`cd "${pwd}" && npm ${args.join(' ')}`, {
     windowsHide: true,
     stdio: 'inherit'
 });

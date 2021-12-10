@@ -1,13 +1,27 @@
 # Usage
 
-## Destructively reset environment
+## Bootstrap local environment
 
 ```
-./bin/nuke
+git clone https://github.com/alangibson/memori.git
+lerna bootstrap
+npm i -ws
+```
+
+## Run memori CLI from git checkout
+
+```
+npm run memori -- start
 ```
 
 ## Publish packages to NPM
 
 ```
 lerna publish
+```
+
+## Destructively reset environment
+
+```
+./bin/nuke
 ```

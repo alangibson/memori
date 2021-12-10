@@ -5,7 +5,13 @@
   "workspaces": [
     "packages/*"
   ],
+  "scripts": {
+    "memori": "memori"
+  },
   "devDependencies": {
     "lerna": "^4.0.0"
+  },
+  "dependencies": {
+    "pm2": "^5.1.2"
   }
 }
