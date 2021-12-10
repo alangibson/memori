@@ -1,10 +1,10 @@
 {
   "name": "@memori/lib",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "type": "module",
-  "private": true,
+  "private": false,
   "scripts": {
     "clean": "rimraf ./build",
     "clean:ts": "rimraf tsconfig.tsbuildinfo",

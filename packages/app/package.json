@@ -1,0 +1,34 @@
+{
+  "name": "@memori/app",
+  "version": "0.0.3",
+  "description": "Memori : Never Forget",
+  "bin": {
+    "memori": "./bin/memori"
+  },
+  "scripts": {
+    "start": "pm2 start pm2.config.js --no-daemon",
+    "stop": "pm2 stop pm2.config.js",
+    "pm2": "pm2"
+  },
+  "files": [
+    "pm2.config.js",
+    "pm2-npm.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alangibson/memori.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alangibson/memori/issues"
+  },
+  "homepage": "https://github.com/alangibson/memori#readme",
+  "dependencies": {
+    "pm2": "^5.1.2",
+    "@memori/extension": "*",
+    "@memori/proxy": "*",
+    "@memori/pwa": "*",
+    "@memori/server": "*"
+  }
+}

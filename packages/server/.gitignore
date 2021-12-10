@@ -4,3 +4,5 @@ store/
 etc/vosk-*
 etc/security.json
 build
+dist
+node_modules

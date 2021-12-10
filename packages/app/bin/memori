@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+ProgName=$(basename $0)
+
+sub_help(){
+    echo "Usage: $ProgName <subcommand> [options]"
+    echo ""
+    echo "Subcommands:"
+    echo "    start   Start processes in background"
+    echo "    stop    Stop background processes"
+    echo "    run     Same as start, but don't exit"
+    echo "    status  Get process status"
+    echo ""
+    echo "For help with each subcommand run:"
+    echo "$ProgName <subcommand> -h|--help"
+    echo ""
+}
+
+sub_run() {
+    pm2 start $(npm ls @memori/app -p)/pm2.config.js --no-daemon
+}
+
+sub_start() {
+    pm2 start $(npm ls @memori/app -p)/pm2.config.js
+}
+
+sub_stop() {
+    pm2 stop $(npm ls @memori/app -p)/pm2.config.js
+}
+
+sub_status() {
+    pm2 status $(npm ls @memori/app -p)/pm2.config.js
+}
+
+
+# https://gist.github.com/waylan/4080362
+subcommand=$1
+case $subcommand in
+    "" | "-h" | "--help")
+        sub_help
+        ;;
+    *)
+        shift
+        sub_${subcommand} $@
+        if [ $? = 127 ]; then
+            echo "Error: '$subcommand' is not a known subcommand." >&2
+            echo "       Run '$ProgName --help' for a list of known subcommands." >&2
+            exit 1
+        fi
+        ;;
+esac

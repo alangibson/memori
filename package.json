@@ -1,27 +1,8 @@
 {
   "name": "memori",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "pm2 start pm2.config.js --no-daemon",
-    "stop": "pm2 stop pm2.config.js",
-    "pm2": "pm2"
-  },
+  "version": "0.0.1",
+  "description": "Memori : Never Forget",
   "workspaces": [
     "packages/*"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/alangibson/memori.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/alangibson/memori/issues"
-  },
-  "homepage": "https://github.com/alangibson/memori#readme",
-  "dependencies": {
-    "pm2": "^5.1.2"
-  }
+  ]
 }
