@@ -1,6 +1,6 @@
 {
   "name": "@memori/proxy",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Memori reverse proxy",
   "bin": "./dist/index.js",
   "main": "./dist/index.js",
