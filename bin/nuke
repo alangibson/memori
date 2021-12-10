@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+#
+# Reset everything.
+#
+
+./node_modules/.bin/memori stop
+./packages/app/node_modules/.bin/pm2 kill
+rm -fr ~/.pm2
+
+killall node
+ss -tlpn | grep 432
+
+find . -name 'node_modules' -type d -prune
+find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +
+
+find . -name 'package-lock.json' -type f -prune
+find . -name 'package-lock.json' -type f -prune -exec rm '{}' +
+
+echo "You probaby want to run"
+echo
+echo "  lerna bootstrap && npm install"
+echo
+echo "after nuking everything"
