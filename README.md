@@ -1,3 +1,7 @@
+# Usage
+
+# Publish packages to NPM
+
 ```
-npm exec -- @memori/app run
+lerna publish
 ```

@@ -1,3 +1,7 @@
+# Memori Server
+
+> If you want to run the Memori application, see @memori/app
+
 ## Installation
 
 ### Run local server on Linux

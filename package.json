@@ -1,8 +1,11 @@
 {
   "name": "memori",
-  "version": "0.0.1",
-  "description": "Memori : Never Forget",
+  "version": "0.0.0",
+  "description": "Root of monorepo",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  }
 }
