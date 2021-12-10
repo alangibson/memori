@@ -6,7 +6,13 @@
 
 #### Linux
 
-See @memori/server
+For prerequisites, see @memori/server
+
+then:
+
+```
+npm i -g pm2
+```
 
 #### Windows
 

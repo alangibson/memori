@@ -2,7 +2,6 @@
   "name": "@memori/server",
   "version": "0.0.7",
   "description": "Memori : Never Forget",
-  "bin": "./dist/server/cluster.js",
   "type": "module",
   "author": "",
   "license": "ISC",

@@ -3,7 +3,7 @@
   "version": "0.0.5",
   "description": "Memori : Never Forget",
   "bin": {
-    "memori": "./bin/memori"
+    "memori": "./bin/cli.js"
   },
   "scripts": {
     "start": "pm2 start pm2.config.js --no-daemon",
