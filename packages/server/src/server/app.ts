@@ -32,20 +32,28 @@ app.use(passport.initialize());
 // http://www.passportjs.org/packages/passport-http-bearer/
 passport.use(
     new BearerStrategy(async (token, done) => {
-        const authorization =
-            await Config.getInstance().getAuthorizationByToken(token);
-        if (!authorization) return done(null, null);
-        else done(null, authorization, { scope: authorization.scope });
+        try {
+            const authorization =
+                await Config.getInstance().getAuthorizationByToken(token);
+            if (!authorization) return done(null, null);
+            else done(null, authorization, { scope: authorization.scope });
+        } catch (e) {
+            console.error(`BearerStrategy : Unexpected error`, e);
+        }
     })
 );
 passport.use(
     new CookieStrategy(
         { cookieName: 'Authorization' },
         async (token: string, done: any) => {
-            const authorization =
-                await Config.getInstance().getAuthorizationByToken(token);
-            if (!authorization) return done(null, null);
-            else done(null, authorization, { scope: authorization.scope });
+            try {
+                const authorization =
+                    await Config.getInstance().getAuthorizationByToken(token);
+                if (!authorization) return done(null, null);
+                else done(null, authorization, { scope: authorization.scope });
+            } catch (e) {
+                console.error(`CookieStrategy : Unexpected error`, e);
+            }
         }
     )
 );
@@ -422,32 +430,37 @@ app.post('/mind', async (req, res) => {
 
 // https://owasp.org/www-community/HttpOnly
 app.get('/authorization', async (req, res) => {
+    console.debug('GET /authorization');
+
     // See if token is good
     const token: string | undefined = req.query.token?.toString();
 
     if (!token) return res.sendStatus(400);
 
-    const config: Config = Config.getInstance();
-    const access = await config.getAuthorizationByToken(token);
-    console.debug(
-        `GET /authorization : Found access for token ${token}`,
-        access
-    );
-    if (!access) return res.sendStatus(401);
+    var config: Config = Config.getInstance();
+
+    try {
+        const access = await config.getAuthorizationByToken(token);
+        if (!access) return res.sendStatus(401);
+    } catch (e) {
+        console.error(
+            'GET /authorization : Failed to getAuthorizationByToken()',
+            e
+        );
+        return res.sendStatus(500);
+    }
 
     res.status(204)
         .setHeader(
             'Set-Cookie',
             `Authorization=${token}; Max-Age>=0; path=/; HttpOnly; SameSite=Lax`
         )
-        // .setHeader('Location', '/')
         .end();
 });
 
 app.delete('/authorization', async (req, res) => {
     res.status(204)
         .setHeader('Set-Cookie', 'Authorization=""; Max-Age>=0; path=/')
-        // .setHeader('Location', '/')
         .end();
 });
 

@@ -12,7 +12,7 @@ describe('AudioParser', () => {
             blob: blob,
             encodingFormat: 'audio/mp3'
         });
-        // Then
-        console.log(out);
+        // TODO Then
+        // console.log(out);
     });
 });

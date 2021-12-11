@@ -181,6 +181,7 @@ export class Mind implements IPersistable {
 
     // Write to disk
     async save() {
+        console.debug('Mind.save()');
         // await this.worker?.save();
         return await this.index.save();
     }
