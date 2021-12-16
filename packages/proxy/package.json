@@ -1,6 +1,6 @@
 {
   "name": "@memori/proxy",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Memori reverse proxy",
   "bin": {
     "memori-proxy": "./bin/pm2-npm.js"

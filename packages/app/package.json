@@ -1,6 +1,6 @@
 {
   "name": "@memori/app",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Memori : Never Forget",
   "bin": {
     "memori": "./bin/cli.js"
@@ -25,10 +25,10 @@
   },
   "homepage": "https://github.com/alangibson/memori#readme",
   "dependencies": {
-    "@memori/extension": "^0.0.6",
-    "@memori/proxy": "^0.0.7",
-    "@memori/pwa": "^0.0.8",
-    "@memori/server": "^0.0.10",
+    "@memori/extension": "^0.0.7",
+    "@memori/proxy": "^0.0.8",
+    "@memori/pwa": "^0.0.9",
+    "@memori/server": "^0.0.11",
     "pm2": "^5.1.2"
   }
 }
