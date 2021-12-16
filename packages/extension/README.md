@@ -6,3 +6,9 @@ npx web-ext run --verbose
 
 # 1) Go go about:debugging 2) Click "This Firefox" 3) Click "Inspect" under plugin
 ```
+
+## Run server
+
+```
+npm exec -- @memori/extension start
+```

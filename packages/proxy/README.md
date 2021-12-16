@@ -4,6 +4,14 @@
 
 ## Usage
 
+### Run from code
+
 ```
 npm start
+```
+
+### Run from package
+
+```
+npm exec -- @memori/proxy start
 ```

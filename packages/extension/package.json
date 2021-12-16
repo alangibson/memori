@@ -3,6 +3,10 @@
   "version": "0.0.6",
   "description": "Memori Browser Extension",
   "main": "index.js",
+  "type": "module",
+  "bin": {
+    "memori-extension": "./bin/pm2-npm.js"
+  },
   "scripts": {
     "clean": "rimraf ./public/extension/build",
     "build": "mkdir -p ./public/extension/build && zip -x node_modules/**/\\* -r ./public/extension/build/memori-browser-extension-latest.zip *",

@@ -21,5 +21,5 @@ See @memori/server
 ### Running Memori
 
 ```
-npm exec -- @memori/app run
+npm exec -- @memori/app start
 ```

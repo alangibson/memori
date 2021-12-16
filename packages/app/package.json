@@ -6,13 +6,13 @@
     "memori": "./bin/cli.js"
   },
   "scripts": {
-    "start": "pm2 start pm2.config.js --no-daemon",
+    "start": "pm2 start pm2.config.js",
     "stop": "pm2 stop pm2.config.js",
     "pm2": "pm2"
   },
   "files": [
     "pm2.config.js",
-    "pm2-npm.js"
+    "bin/pm2-npm.js"
   ],
   "repository": {
     "type": "git",

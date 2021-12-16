@@ -110,7 +110,7 @@ npm run cli crawl
 ### Start server
 
 ```
-npm run serve
+npm exec -- @memori/server start
 ```
 
 ### Run extension in Firefox with hot reload

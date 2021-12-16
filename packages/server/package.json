@@ -6,6 +6,9 @@
   "author": "",
   "license": "ISC",
   "private": false,
+  "bin": {
+    "memori-server": "./bin/pm2-npm.js"
+  },
   "scripts": {
     "build": "npm run check && npm run test && npm run compile",
     "check": "npm run check:ts && npm run check:format",

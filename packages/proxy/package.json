@@ -2,7 +2,9 @@
   "name": "@memori/proxy",
   "version": "0.0.7",
   "description": "Memori reverse proxy",
-  "bin": "./dist/index.js",
+  "bin": {
+    "memori-proxy": "./bin/pm2-npm.js"
+  },
   "main": "./dist/index.js",
   "type": "module",
   "private": false,
