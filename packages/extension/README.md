@@ -1,4 +1,12 @@
-### Run extension in Firefox with hot reload
+# Memori Browser Extension
+
+## Build
+
+```
+npm run build
+```
+
+## Run extension in Firefox with hot reload
 
 ```
 cd extension
