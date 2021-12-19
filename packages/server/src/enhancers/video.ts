@@ -6,7 +6,7 @@ import { IIndexable, IMemory, IRememberable } from '../models';
 import { SpeachToText } from '../stt';
 import { abstractFromString } from '../parsers';
 import { IEnhancer } from './index';
-import { Fetcher } from '../fetcher';
+import { Fetcher } from '../fetchers';
 
 interface IDownloadResult {
     blob: Buffer;

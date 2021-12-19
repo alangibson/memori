@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "memori": "memori"
+    "memori": "memori",
+    "start": "npm run memori -- start"
   },
   "devDependencies": {
     "lerna": "^4.0.0"

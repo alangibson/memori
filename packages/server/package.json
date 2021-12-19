@@ -96,6 +96,7 @@
     "flexsearch": "^0.7.21",
     "html-metadata": "^1.7.1",
     "image-thumbnail": "^1.0.14",
+    "ix": "^4.5.2",
     "jsdom": "^18.0.0",
     "jsdom-global": "^3.0.2",
     "jsonld": "^4.0.1",

@@ -11,7 +11,7 @@ npm i -ws
 ## Run memori CLI from git checkout
 
 ```
-npm run memori -- start
+npm start
 ```
 
 ## Publish packages to NPM

@@ -1,3 +1,4 @@
+import { URL } from 'url';
 import { IPersistable, IRecalledMemory } from '../index';
 import { IdRef, IMemory } from '../models';
 import { CouchDbDatabase } from '../indexer/couchdb';

@@ -116,11 +116,17 @@ async function rememberAll(
     console.log(
         `rememberAll() : Remembering ${rememberables.length} IRememberables`
     );
-    return await Promise.all(
-        rememberables.map(
-            async (rememberable) => await mind.remember(rememberable)
-        )
-    );
+
+    return rememberables
+        .map(async (rememberable) => await mind.remember(rememberable))
+        .reduce(
+            async (
+                prev: Promise<IMemory[]>,
+                curr: Promise<IMemory[]>
+            ): Promise<IMemory[]> => {
+                return (await prev).concat(await curr);
+            }
+        );
 }
 
 // Target for WebShare API call
@@ -185,7 +191,7 @@ app.post(
         // Any post with a 'uri-list' field is
         if (req.body['uri-list']) {
             console.debug('POST /memory : Remembering a text/uri-list');
-            remembered.push(
+            remembered = remembered.concat(
                 await mind.remember({
                     encodingFormat: 'text/uri-list',
                     blob: Buffer.from(req.body['uri-list'])
@@ -197,7 +203,7 @@ app.post(
         // Any post with a 'note' field is treated as a note
         if (req.body.note) {
             console.debug('POST /memory : Remembering a text note');
-            remembered.push(
+            remembered = remembered.concat(
                 await mind.remember({
                     name: req.body.name, // possibly undefined
                     url: req.body.url, // possibly undefined

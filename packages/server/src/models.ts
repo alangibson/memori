@@ -1,3 +1,6 @@
+import { CrawlType } from './crawler/crawler';
+import { URL } from 'url';
+
 // // https://developers.google.com/search/docs/advanced/structured-data/search-gallery
 // export type SupportedSchemaorgTypes = WithContext<Thing> | Article | BreadcrumbList | DigitalDocument |
 //     ImageObject | NoteDigitalDocument | PodcastSeries | Product | SoftwareApplication |
@@ -11,6 +14,11 @@ type RememberableType =
     | 'text/html'
     | 'text/uri-list'
     | 'audio/mp3';
+
+export interface RememberOptions {
+    crawl: CrawlType;
+    crawlDepth?: number;
+}
 
 export interface IdRef {
     '@id': string;
@@ -51,6 +59,7 @@ export interface ICommand extends ICommittable {
     // unqualified command log filename
     // Only exists on read after write
     commandId?: string;
+    rememberOptions?: RememberOptions;
 }
 
 // A thing that can be stored in the index

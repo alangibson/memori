@@ -1,3 +1,4 @@
+import { URL } from 'url';
 import flexSearch, { IndexSearchResult } from 'flexsearch';
 import { IPersistable } from '../index';
 import { IMemory } from '../models';

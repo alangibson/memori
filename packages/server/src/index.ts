@@ -5,13 +5,19 @@ import crypto from 'crypto';
 import { CID } from 'multiformats/cid';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { base32 } from 'multiformats/bases/base32';
-import { ICommittable, IMemory, IRememberable } from './models';
+import {
+    ICommittable,
+    IMemory,
+    IRememberable,
+    RememberOptions
+} from './models';
 import { Enhancer } from './enhancers';
 import { Index } from './indexer/indexer';
 import { Commands } from './commands';
-import { Fetcher } from './fetcher';
+import { Fetcher, IResource, Resource } from './fetchers';
 import { Parser } from './parsers';
 import { ISettings } from './configuration';
+import { Crawler } from './crawler/crawler';
 
 export interface IPersistable {
     save(): void;
@@ -92,66 +98,89 @@ export class Mind implements IPersistable {
         return await new Parser(this.settings).parse(response);
     }
 
-    // Commit something to Memory
-    async commit(rememberable: ICommittable): Promise<IMemory> {
-        console.debug(
-            `Mind.commit() : Committing to memory ${rememberable.encodingFormat} ${rememberable.url}`
-        );
-
-        // If we get a url, we need to fetch it
-        if (rememberable.encodingFormat == 'text/uri-list') {
-            // FIXME iterate over urls, separated by \r\n per spec
-            // Fetch resource
-            rememberable = await this.fetch(
-                new URL(rememberable.blob.toString('utf8'))
-            );
-        }
-        // otherwise we assume we already have a usable resource (ie. blob and mimeType is set)
-
-        // Dispatch Response to parser
-        let memories: IMemory[] = await this.parse(rememberable);
-
-        // Write into Index immediately
-        await this.index.index(memories);
-
-        // Enhance all schemas
-        const enhancements: Promise<IMemory>[] = memories.map(
-            (memory: IMemory) => new Enhancer(this.settings).enhance(memory)
-        );
-
-        // Just do await on all enhancement
-        // memories = await Promise.all(enhancements);
-
-        // TODO since we wait for all to finish, it could take unnecessarily long
-        // for things like Youtube with videos to download to show up
-
-        // Wait for all enhancers to finsih then index all
-        // in a single batch
-        Promise.all(enhancements).then((memories: IMemory[]) => {
-            this.index
-                .index(memories)
-                // Make sure search index gets written out
-                .then(() => this.index.save());
+    // TODO URL should be crawlable too? That way we can replace fetch()
+    async *crawl(crawlable: ICommittable, options: RememberOptions) {
+        // Construct crawler
+        const crawler = new Crawler(Fetcher.from(crawlable), {
+            type: options.crawl,
+            depth: options.crawlDepth
         });
+
+        if (crawlable.encodingFormat == 'text/uri-list') {
+            // Loop over each uri
+            for (const urlString of crawlable.blob.toString().split('\n')) {
+                // Yield IResource as they are created
+                for await (let r of crawler.crawl(new URL(urlString))) {
+                    yield r;
+                }
+            }
+        } else {
+            // Upgrade ICommittable to IResource
+            const resource: IResource = Resource.from(crawlable);
+            // then yield IResource as they are created
+            for await (let r of crawler.crawl(resource)) {
+                yield r;
+            }
+        }
+    }
+
+    // Commit something to Memory
+    async commit(
+        committable: ICommittable,
+        options: RememberOptions = { crawl: 'single' }
+    ): Promise<IMemory[]> {
+        console.debug(
+            `Mind.commit() : Committing to memory ${committable.encodingFormat} ${committable.url}`
+        );
+
+        let allMemories: IMemory[] = [];
+        for await (const resource of this.crawl(committable, options)) {
+            // Dispatch Response to parser
+            let memories: IMemory[] = await this.parse(resource);
+            // and save memories to return later
+            allMemories = allMemories.concat(memories);
+
+            // Write into Index immediately
+            await this.index.index(memories);
+
+            // Enhance all schemas
+            const enhancements: Promise<IMemory>[] = memories.map(
+                (memory: IMemory) => new Enhancer(this.settings).enhance(memory)
+            );
+
+            // Wait for all enhancers to finish then index all in a single batch
+            Promise.all(enhancements).then((memories: IMemory[]) => {
+                this.index
+                    .index(memories)
+                    // Make sure search index gets written out
+                    .then(() => this.index.save());
+            });
+        }
 
         // Return Memory we stored. The first item in the list is always the
         // primary Memory.
-        return memories[0];
+        return allMemories;
     }
 
     // Remember something.
     // This method mainly exists to add missing info before commit().
-    async remember(rememberable: IRememberable): Promise<IMemory> {
+    async remember(
+        rememberable: IRememberable,
+        options?: RememberOptions
+    ): Promise<IMemory[]> {
         // Upgrade type since since we will always have a location
         rememberable.url =
             rememberable.url || (await contentHashUrl(rememberable.blob));
-        const commitable: ICommittable = <ICommittable>rememberable;
+        const committable: ICommittable = <ICommittable>rememberable;
 
         // Archive the user input
-        await this.commands.log({ action: 'remember', ...commitable });
-
+        await this.commands.log({
+            action: 'remember',
+            rememberOptions: options,
+            ...committable
+        });
         // then commit to memory
-        return this.commit(commitable);
+        return this.commit(committable, options);
     }
 
     async forget(id: URL) {
